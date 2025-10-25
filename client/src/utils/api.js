@@ -4,7 +4,11 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api
 
 // Ensure API_BASE_URL ends with /api
 const getApiUrl = (endpoint) => {
-  const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+  // Remove trailing slash and ensure it ends with /api
+  let baseUrl = API_BASE_URL.replace(/\/$/, ''); // Remove trailing slash
+  if (!baseUrl.endsWith('/api')) {
+    baseUrl = `${baseUrl}/api`;
+  }
   return `${baseUrl}${endpoint}`;
 };
 

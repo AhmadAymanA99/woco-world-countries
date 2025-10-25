@@ -2,42 +2,48 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Ensure API_BASE_URL ends with /api
+const getApiUrl = (endpoint) => {
+  const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+  return `${baseUrl}${endpoint}`;
+};
+
 // Countries API
 export const countriesAPI = {
-  getAll: (params = {}) => axios.get(`${API_BASE_URL}/countries`, { params }),
-  getById: (id) => axios.get(`${API_BASE_URL}/countries/${id}`),
+  getAll: (params = {}) => axios.get(getApiUrl('/countries'), { params }),
+  getById: (id) => axios.get(getApiUrl(`/countries/${id}`)),
   getByContinent: (continent, params = {}) => 
-    axios.get(`${API_BASE_URL}/countries/continent/${continent}`, { params }),
-  getContinents: () => axios.get(`${API_BASE_URL}/countries/meta/continents`),
+    axios.get(getApiUrl(`/countries/continent/${continent}`), { params }),
+  getContinents: () => axios.get(getApiUrl('/countries/meta/continents')),
   search: (query, limit = 20) => 
-    axios.get(`${API_BASE_URL}/countries/search/${query}`, { params: { limit } })
+    axios.get(getApiUrl(`/countries/search/${query}`), { params: { limit } })
 };
 
 // Users API
 export const usersAPI = {
-  getVisitedCountries: () => axios.get(`${API_BASE_URL}/users/visited-countries`),
-  addVisitedCountry: (data) => axios.post(`${API_BASE_URL}/users/visited-countries`, data),
+  getVisitedCountries: () => axios.get(getApiUrl('/users/visited-countries')),
+  addVisitedCountry: (data) => axios.post(getApiUrl('/users/visited-countries'), data),
   updateVisitedCountry: (countryId, data) => 
-    axios.put(`${API_BASE_URL}/users/visited-countries/${countryId}`, data),
+    axios.put(getApiUrl(`/users/visited-countries/${countryId}`), data),
   removeVisitedCountry: (countryId) => 
-    axios.delete(`${API_BASE_URL}/users/visited-countries/${countryId}`),
+    axios.delete(getApiUrl(`/users/visited-countries/${countryId}`)),
   uploadPhoto: (countryId, formData) => 
-    axios.post(`${API_BASE_URL}/users/visited-countries/${countryId}/photos`, formData, {
+    axios.post(getApiUrl(`/users/visited-countries/${countryId}/photos`), formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }),
   deletePhoto: (countryId, photoIndex) => 
-    axios.delete(`${API_BASE_URL}/users/visited-countries/${countryId}/photos/${photoIndex}`),
-  getWishlist: () => axios.get(`${API_BASE_URL}/users/wishlist`),
-  addToWishlist: (countryId) => axios.post(`${API_BASE_URL}/users/wishlist/${countryId}`),
-  removeFromWishlist: (countryId) => axios.delete(`${API_BASE_URL}/users/wishlist/${countryId}`)
+    axios.delete(getApiUrl(`/users/visited-countries/${countryId}/photos/${photoIndex}`)),
+  getWishlist: () => axios.get(getApiUrl('/users/wishlist')),
+  addToWishlist: (countryId) => axios.post(getApiUrl(`/users/wishlist/${countryId}`)),
+  removeFromWishlist: (countryId) => axios.delete(getApiUrl(`/users/wishlist/${countryId}`))
 };
 
 // Auth API
 export const authAPI = {
-  login: (credentials) => axios.post(`${API_BASE_URL}/auth/login`, credentials),
-  register: (userData) => axios.post(`${API_BASE_URL}/auth/register`, userData),
-  getMe: () => axios.get(`${API_BASE_URL}/auth/me`),
-  updateProfile: (profileData) => axios.put(`${API_BASE_URL}/auth/profile`, profileData)
+  login: (credentials) => axios.post(getApiUrl('/auth/login'), credentials),
+  register: (userData) => axios.post(getApiUrl('/auth/register'), userData),
+  getMe: () => axios.get(getApiUrl('/auth/me')),
+  updateProfile: (profileData) => axios.put(getApiUrl('/auth/profile'), profileData)
 };
 
 export default axios;

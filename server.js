@@ -20,7 +20,7 @@ app.use(limiter);
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://your-frontend-url.vercel.app'] 
+    ? [process.env.FRONTEND_URL || 'https://woco-world-countries.vercel.app'] 
     : ['http://localhost:3000'],
   credentials: true
 }));

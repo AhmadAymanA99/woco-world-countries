@@ -1,0 +1,11 @@
+# Railway deployment configuration
+# This file tells Railway how to deploy your application
+
+# Railway will automatically detect this is a Node.js app
+# and run: npm install && npm start
+
+# Make sure your package.json has:
+# - "start": "node server.js"
+# - All dependencies listed
+
+# Environment variables will be set in Railway dashboard

@@ -1,0 +1,6 @@
+# Railway ignore file
+# Exclude frontend files from backend deployment
+
+client/
+client/**
+node_modules/client/

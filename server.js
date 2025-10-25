@@ -17,12 +17,12 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration - Temporary fix for debugging
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://woco-world-countries.vercel.app'] 
-    : ['http://localhost:3000'],
-  credentials: true
+  origin: true, // Allow all origins temporarily
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parsing middleware

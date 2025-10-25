@@ -37,6 +37,15 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => console.log('MongoDB connected successfully'))
 .catch(err => console.error('MongoDB connection error:', err));
 
+// Health check route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'WoCo API is running!', 
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/countries', require('./routes/countries'));

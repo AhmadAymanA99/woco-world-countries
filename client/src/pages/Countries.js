@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { countriesAPI } from '../utils/api';
 import { 
   Search, 
@@ -14,11 +14,23 @@ import {
 } from 'lucide-react';
 
 const Countries = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const continentFromUrl = searchParams.get('continent');
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContinent, setSelectedContinent] = useState('all');
+  const [selectedContinent, setSelectedContinent] = useState(continentFromUrl || 'all');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [viewMode, setViewMode] = useState('grid');
+
+  // Sync state with URL parameter
+  useEffect(() => {
+    if (continentFromUrl) {
+      setSelectedContinent(continentFromUrl);
+    } else {
+      setSelectedContinent('all');
+    }
+  }, [continentFromUrl]);
 
   const { data: continentsData } = useQuery('continents', countriesAPI.getContinents);
   
@@ -112,25 +124,25 @@ const Countries = () => {
   const CountryListItem = ({ country }) => (
     <Link
       to={`/countries/${country._id}`}
-      className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all group"
+      className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all group gap-3"
     >
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 flex-1 min-w-0">
         <img
           src={country.flag}
           alt={`${country.name} flag`}
-          className="w-12 h-8 object-cover rounded border"
+          className="w-12 h-8 object-cover rounded border flex-shrink-0"
         />
-        <div>
-          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
             {country.name}
           </h3>
-          <p className="text-sm text-gray-600">{country.continent}</p>
+          <p className="text-sm text-gray-600 truncate">{country.continent}</p>
         </div>
       </div>
-      <div className="flex items-center space-x-6 text-sm text-gray-500">
-        {country.capital && <span>{country.capital}</span>}
+      <div className="flex items-center space-x-4 md:space-x-6 text-sm text-gray-500 flex-wrap justify-end">
+        {country.capital && <span className="whitespace-nowrap">{country.capital}</span>}
         {country.population?.total && (
-          <span>
+          <span className="whitespace-nowrap">
             {country.population.total >= 1000000 
               ? `${Math.round(country.population.total / 1000000)}M people`
               : `${Math.round(country.population.total / 1000)}K people`
@@ -138,14 +150,14 @@ const Countries = () => {
           </span>
         )}
         {country.gdp?.total && (
-          <span>
+          <span className="whitespace-nowrap">
             {country.gdp.total >= 1000000000 
               ? `$${Math.round(country.gdp.total / 1000000000)}B`
               : `$${Math.round(country.gdp.total / 1000000)}M`
             }
           </span>
         )}
-        <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+        <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" />
       </div>
     </Link>
   );
@@ -185,7 +197,16 @@ const Countries = () => {
           <div className="lg:w-48">
             <select
               value={selectedContinent}
-              onChange={(e) => setSelectedContinent(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedContinent(value);
+                if (value === 'all') {
+                  searchParams.delete('continent');
+                } else {
+                  searchParams.set('continent', value);
+                }
+                setSearchParams(searchParams);
+              }}
               className="input-field"
             >
               <option value="all">All Continents</option>
@@ -198,7 +219,7 @@ const Countries = () => {
           </div>
 
           {/* Sort Options */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 overflow-x-auto -mx-4 px-4">
             <SortButton field="name">Name</SortButton>
             <SortButton field="continent">Continent</SortButton>
             <SortButton field="population">Population</SortButton>

@@ -47,7 +47,13 @@ export const authAPI = {
   login: (credentials) => axios.post(getApiUrl('/auth/login'), credentials),
   register: (userData) => axios.post(getApiUrl('/auth/register'), userData),
   getMe: () => axios.get(getApiUrl('/auth/me')),
-  updateProfile: (profileData) => axios.put(getApiUrl('/auth/profile'), profileData)
+  updateProfile: (profileData) => axios.put(getApiUrl('/auth/profile'), profileData),
+  addAuthHeader: (token) => {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  },
+  removeAuthHeader: () => {
+    delete axios.defaults.headers.common['Authorization'];
+  }
 };
 
 export default axios;

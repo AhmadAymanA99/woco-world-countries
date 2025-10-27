@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { countriesAPI, usersAPI } from '../utils/api';
+import { SEO } from '../components/SEO';
 import toast from 'react-hot-toast';
 import { 
   ArrowLeft, 
@@ -128,7 +129,7 @@ const CountryDetail = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -148,9 +149,16 @@ const CountryDetail = () => {
 
   return (
     <div className="space-y-8">
+      <SEO 
+        title={`${countryData.name} - Country Information`}
+        description={`Learn about ${countryData.name}: population, capital, GDP, landmarks, and cultural traditions. Discover ${countryData.continent} and plan your travel adventure.`}
+        keywords={`${countryData.name}, ${countryData.continent}, country information, population, GDP, landmarks, travel, ${countryData.capital || ''}`}
+        image={countryData.flag}
+        url={`/countries/${countryData._id}`}
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to="/countries" className="flex items-center space-x-2 text-gray-600 hover:text-blue-600">
+        <Link to="/countries" className="flex items-center space-x-2 text-gray-600 hover:text-primary-600">
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Countries</span>
         </Link>
@@ -187,7 +195,8 @@ const CountryDetail = () => {
         <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
           <img
             src={countryData.flag}
-            alt={`${countryData.name} flag`}
+            alt={`Flag of ${countryData.name}`}
+            loading="lazy"
             className="w-24 h-16 object-cover rounded border shadow-sm"
           />
           <div className="flex-1">
@@ -422,7 +431,7 @@ const CountryDetail = () => {
               <div key={index} className="p-4 border border-gray-200 rounded-lg">
                 <h3 className="font-semibold text-gray-900 mb-2">{tradition.name}</h3>
                 <p className="text-gray-600 mb-2">{tradition.description}</p>
-                <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full">
                   {tradition.category}
                 </span>
               </div>

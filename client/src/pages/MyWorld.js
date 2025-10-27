@@ -89,7 +89,7 @@ const MyWorld = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center min-h-96">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
             </div>
         );
     }
@@ -106,8 +106,8 @@ const MyWorld = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="card text-center">
                     <div className="flex justify-center mb-3">
-                        <div className="p-3 bg-blue-100 rounded-full">
-                            <Globe className="h-6 w-6 text-blue-600" />
+                        <div className="p-3 bg-primary-100 rounded-full">
+                            <Globe className="h-6 w-6 text-primary-600" />
                         </div>
                     </div>
                     <div className="text-3xl font-bold text-gray-900 mb-1">{stats.totalCountries}</div>
@@ -159,7 +159,7 @@ const MyWorld = () => {
                                     <div className="flex items-start space-x-4 flex-1">
                                         <img src={visit.country.flag} alt={`${visit.country.name} flag`} className="w-16 h-12 object-cover rounded border shadow-sm" />
                                         <div className="flex-1">
-                                            <Link to={`/countries/${visit.country._id}`} className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+                                            <Link to={`/countries/${visit.country._id}`} className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors">
                                                 {visit.country.name}
                                             </Link>
                                             <p className="text-gray-600 mb-2">{visit.country.continent}</p>

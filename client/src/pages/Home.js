@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "react-query";
 import { countriesAPI } from "../utils/api";
 import { Globe, MapPin, Users, Star, ArrowRight, Heart } from "lucide-react";
+import { SEO } from "../components/SEO";
 
 const Home = () => {
     const { data: continentsData } = useQuery("continents", countriesAPI.getContinents);
@@ -13,7 +14,7 @@ const Home = () => {
             icon: Globe,
             title: "Explore Countries",
             description: "Discover detailed information about every country in the world",
-            color: "text-blue-600",
+            color: "text-primary-600",
             link: "/countries",
         },
         {
@@ -53,6 +54,12 @@ const Home = () => {
 
     return (
         <div className="space-y-16">
+            <SEO 
+                title="WoCo - World Countries | Explore Every Country in the World"
+                description="Discover detailed information about every country in the world. Track your travels, explore cultures, learn about population, GDP, landmarks, and traditions. Join thousands of travelers building their world map."
+                keywords="countries, world countries, travel tracker, country information, world map, population, GDP, landmarks, cultures, traditions"
+                url="/"
+            />
             {/* Hero Section */}
             <section className="text-center py-16">
                 <div className="max-w-4xl mx-auto">
@@ -75,15 +82,15 @@ const Home = () => {
             <section className="py-12 bg-white rounded-2xl shadow-sm">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                     {stats.map(({ label, value, icon: Icon }) => (
-                        <div key={label} className="text-center">
+                        <article key={label} className="text-center">
                             <div className="flex justify-center mb-3">
-                                <div className="p-3 bg-blue-100 rounded-full">
-                                    <Icon className="h-6 w-6 text-blue-600" />
+                                <div className="p-3 bg-primary-100 rounded-full" role="img" aria-label={label}>
+                                    <Icon className="h-6 w-6 text-primary-600" />
                                 </div>
                             </div>
                             <div className="text-3xl font-bold text-gray-900 mb-1">{value}</div>
                             <div className="text-gray-600">{label}</div>
-                        </div>
+                        </article>
                     ))}
                 </div>
             </section>
@@ -103,9 +110,9 @@ const Home = () => {
                                     <Icon className={`h-8 w-8 ${color}`} />
                                 </div>
                             </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">{title}</h3>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors">{title}</h3>
                             <p className="text-gray-600 mb-2">{description}</p>
-                            <div className="flex items-center justify-center mt-3 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center justify-center mt-3 text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span className="text-sm">Explore</span>
                                 <ArrowRight className="h-4 w-4 ml-1" />
                             </div>
@@ -126,8 +133,8 @@ const Home = () => {
                         {continentsData.data.map((continent) => (
                             <Link key={continent} to={`/countries?continent=${continent}`} className="card hover:shadow-lg transition-all hover:scale-105 text-center group">
                                 <div className="text-2xl mb-2">{getContinentEmoji(continent)}</div>
-                                <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{continent}</h3>
-                                <div className="flex items-center justify-center mt-2 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">{continent}</h3>
+                                <div className="flex items-center justify-center mt-2 text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <span className="text-sm">Explore</span>
                                     <ArrowRight className="h-4 w-4 ml-1" />
                                 </div>
@@ -149,13 +156,13 @@ const Home = () => {
                         {countriesData.data.countries.slice(0, 6).map((country) => (
                             <Link key={country._id} to={`/countries/${country._id}`} className="card hover:shadow-lg transition-all hover:scale-105 group">
                                 <div className="flex items-center space-x-4">
-                                    <img src={country.flag} alt={`${country.name} flag`} className="w-12 h-8 object-cover rounded border" />
+                                    <img src={country.flag} alt={`Flag of ${country.name}`} loading="lazy" className="w-12 h-8 object-cover rounded border" />
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{country.name}</h3>
+                                        <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">{country.name}</h3>
                                         <p className="text-sm text-gray-600">{country.continent}</p>
                                         {country.population?.total && <p className="text-xs text-gray-500">Population: {country.population.total.toLocaleString()}</p>}
                                     </div>
-                                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary-600 transition-colors" />
                                 </div>
                             </Link>
                         ))}
@@ -174,7 +181,7 @@ const Home = () => {
                 <div className="max-w-2xl mx-auto">
                     <h2 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
                     <p className="text-xl mb-8 opacity-90">Join thousands of travelers exploring the world with WoCo</p>
-                    <Link to="/register" className="bg-white text-blue-600 hover:bg-gray-100 font-medium py-3 px-8 rounded-lg transition-colors">
+                    <Link to="/register" className="bg-white text-primary-600 hover:bg-gray-100 font-medium py-3 px-8 rounded-lg transition-colors">
                         Get Started Free
                     </Link>
                 </div>

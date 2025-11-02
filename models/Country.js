@@ -66,19 +66,33 @@ const countrySchema = new mongoose.Schema({
     }
   }],
   touristAttractions: [{
-    name: String,
+    name: {
+      type: String,
+      required: true
+    },
     description: String,
     location: String,
+    coordinates: {
+      latitude: Number,
+      longitude: Number
+    },
     category: {
       type: String,
       enum: ['historical', 'natural', 'cultural', 'religious', 'adventure', 'beach', 'mountain', 'city', 'other']
     },
-    imageUrl: String,
+    images: [{
+      url: String,
+      caption: String
+    }],
+    imageUrl: String, // Keep for backward compatibility
     rating: {
       type: Number,
       min: 1,
       max: 5
-    }
+    },
+    openingHours: String,
+    admissionFee: String,
+    website: String
   }],
   capital: String,
   currency: String,

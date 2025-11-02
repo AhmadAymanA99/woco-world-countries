@@ -86,7 +86,32 @@ const userSchema = new mongoose.Schema({
   emailVerified: {
     type: Boolean,
     default: false
-  }
+  },
+  // Social features
+  profileVisibility: {
+    type: String,
+    enum: ['public', 'private', 'friends'],
+    default: 'public'
+  },
+  bio: {
+    type: String,
+    maxlength: 500
+  },
+  location: String,
+  website: String,
+  socialLinks: {
+    instagram: String,
+    twitter: String,
+    facebook: String
+  },
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 }, {
   timestamps: true
 });

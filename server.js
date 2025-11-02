@@ -52,6 +52,12 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/countries', require('./routes/countries'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/stories', require('./routes/stories'));
+app.use('/api/trips', require('./routes/trips'));
+app.use('/api/collections', require('./routes/collections'));
+app.use('/api/social', require('./routes/social'));
+app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/attractions', require('./routes/attractions'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -20,7 +20,8 @@ export const countriesAPI = {
     axios.get(getApiUrl(`/countries/continent/${continent}`), { params }),
   getContinents: () => axios.get(getApiUrl('/countries/meta/continents')),
   search: (query, limit = 20) => 
-    axios.get(getApiUrl(`/countries/search/${query}`), { params: { limit } })
+    axios.get(getApiUrl(`/countries/search/${query}`), { params: { limit } }),
+  compare: (countryIds) => axios.post(getApiUrl('/countries/compare'), { countryIds })
 };
 
 // Users API
@@ -48,12 +49,78 @@ export const authAPI = {
   register: (userData) => axios.post(getApiUrl('/auth/register'), userData),
   getMe: () => axios.get(getApiUrl('/auth/me')),
   updateProfile: (profileData) => axios.put(getApiUrl('/auth/profile'), profileData),
+  deleteAccount: () => axios.delete(getApiUrl('/auth/account')),
   addAuthHeader: (token) => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   },
   removeAuthHeader: () => {
     delete axios.defaults.headers.common['Authorization'];
   }
+};
+
+// Stories API
+export const storiesAPI = {
+  getAll: (params = {}) => axios.get(getApiUrl('/stories'), { params }),
+  getById: (id) => axios.get(getApiUrl(`/stories/${id}`)),
+  create: (data) => axios.post(getApiUrl('/stories'), data),
+  update: (id, data) => axios.put(getApiUrl(`/stories/${id}`), data),
+  delete: (id) => axios.delete(getApiUrl(`/stories/${id}`)),
+  like: (id) => axios.post(getApiUrl(`/stories/${id}/like`)),
+  addComment: (id, content) => axios.post(getApiUrl(`/stories/${id}/comments`), { content }),
+  deleteComment: (id, commentId) => axios.delete(getApiUrl(`/stories/${id}/comments/${commentId}`))
+};
+
+// Trips API
+export const tripsAPI = {
+  getAll: (params = {}) => axios.get(getApiUrl('/trips'), { params }),
+  getById: (id) => axios.get(getApiUrl(`/trips/${id}`)),
+  create: (data) => axios.post(getApiUrl('/trips'), data),
+  update: (id, data) => axios.put(getApiUrl(`/trips/${id}`), data),
+  delete: (id) => axios.delete(getApiUrl(`/trips/${id}`)),
+  addCountry: (id, data) => axios.post(getApiUrl(`/trips/${id}/countries`), data)
+};
+
+// Collections API
+export const collectionsAPI = {
+  getAll: (params = {}) => axios.get(getApiUrl('/collections'), { params }),
+  getMyCollections: () => axios.get(getApiUrl('/collections/my-collections')),
+  getById: (id) => axios.get(getApiUrl(`/collections/${id}`)),
+  create: (data) => axios.post(getApiUrl('/collections'), data),
+  update: (id, data) => axios.put(getApiUrl(`/collections/${id}`), data),
+  delete: (id) => axios.delete(getApiUrl(`/collections/${id}`)),
+  addCountry: (id, countryId) => axios.post(getApiUrl(`/collections/${id}/countries/${countryId}`)),
+  removeCountry: (id, countryId) => axios.delete(getApiUrl(`/collections/${id}/countries/${countryId}`))
+};
+
+// Social API
+export const socialAPI = {
+  getProfile: (username) => axios.get(getApiUrl(`/social/profile/${username}`)),
+  follow: (userId) => axios.post(getApiUrl(`/social/follow/${userId}`)),
+  checkFollow: (userId) => axios.get(getApiUrl(`/social/follow/${userId}`)),
+  getFollowers: (userId) => axios.get(getApiUrl(`/social/followers/${userId}`)),
+  getFollowing: (userId) => axios.get(getApiUrl(`/social/following/${userId}`)),
+  getLeaderboard: (type, limit = 10) => axios.get(getApiUrl(`/social/leaderboard/${type}`), { params: { limit } }),
+  getRecommendations: (type) => axios.get(getApiUrl(`/social/recommendations/${type}`))
+};
+
+// Analytics API
+export const analyticsAPI = {
+  getStats: () => axios.get(getApiUrl('/analytics/stats')),
+  exportData: () => axios.get(getApiUrl('/analytics/export'), { responseType: 'blob' })
+};
+
+// Attractions API
+export const attractionsAPI = {
+  getByCountry: (countryId) => axios.get(getApiUrl(`/attractions/country/${countryId}`)),
+  add: (countryId, data) => axios.post(getApiUrl(`/attractions/country/${countryId}`), data),
+  update: (countryId, attractionIndex, data) => 
+    axios.put(getApiUrl(`/attractions/country/${countryId}/attraction/${attractionIndex}`), data),
+  delete: (countryId, attractionIndex) => 
+    axios.delete(getApiUrl(`/attractions/country/${countryId}/attraction/${attractionIndex}`)),
+  addImage: (countryId, attractionIndex, formData) => 
+    axios.post(getApiUrl(`/attractions/country/${countryId}/attraction/${attractionIndex}/image`), formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
 };
 
 export default axios;

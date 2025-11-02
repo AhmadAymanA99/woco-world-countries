@@ -147,4 +147,28 @@ router.get('/search/:query', async (req, res) => {
   }
 });
 
+// Compare countries
+router.post('/compare', async (req, res) => {
+  try {
+    const { countryIds } = req.body;
+    
+    if (!Array.isArray(countryIds) || countryIds.length < 2 || countryIds.length > 4) {
+      return res.status(400).json({ message: 'Please provide 2-4 country IDs' });
+    }
+    
+    const countries = await Country.find({
+      _id: { $in: countryIds }
+    });
+    
+    if (countries.length !== countryIds.length) {
+      return res.status(404).json({ message: 'Some countries not found' });
+    }
+    
+    res.json(countries);
+  } catch (error) {
+    console.error('Compare countries error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

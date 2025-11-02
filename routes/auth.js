@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const Trip = require('../models/Trip');
+const Collection = require('../models/Collection');
+const Story = require('../models/Story');
+const Follow = require('../models/Follow');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -66,7 +70,8 @@ router.post('/register', [
         username: user.username,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        createdAt: user.createdAt
       }
     });
   } catch (error) {
@@ -122,7 +127,8 @@ router.post('/login', [
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        avatar: user.avatar
+        avatar: user.avatar,
+        createdAt: user.createdAt
       }
     });
   } catch (error) {
@@ -189,6 +195,62 @@ router.put('/profile', auth, [
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete account
+router.delete('/account', auth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Delete all trips belonging to the user
+    await Trip.deleteMany({ user: userId });
+
+    // Delete all collections belonging to the user
+    await Collection.deleteMany({ user: userId });
+
+    // Remove user from likes and comments in other stories
+    await Story.updateMany(
+      {},
+      {
+        $pull: {
+          likes: { user: userId },
+          comments: { user: userId }
+        }
+      }
+    );
+
+    // Delete all stories authored by the user
+    await Story.deleteMany({ author: userId });
+
+    // Remove user from likes and followers in collections (belonging to others)
+    await Collection.updateMany(
+      { user: { $ne: userId } },
+      {
+        $pull: {
+          likes: { user: userId },
+          followers: userId
+        }
+      }
+    );
+
+    // Delete all follow relationships where user is follower or following
+    await Follow.deleteMany({
+      $or: [
+        { follower: userId },
+        { following: userId }
+      ]
+    });
+
+    // Finally, delete the user
+    await User.findByIdAndDelete(userId);
+
+    res.json({
+      message: 'Account and all associated data deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ message: 'Server error during account deletion' });
   }
 });
 

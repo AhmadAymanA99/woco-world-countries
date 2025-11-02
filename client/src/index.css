@@ -43,4 +43,68 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .prose {
+    @apply text-gray-700 leading-relaxed;
+  }
+
+  .prose h1 {
+    @apply text-3xl font-bold text-gray-900 mt-8 mb-4;
+  }
+
+  .prose h2 {
+    @apply text-2xl font-bold text-gray-900 mt-6 mb-3;
+  }
+
+  .prose h3 {
+    @apply text-xl font-semibold text-gray-900 mt-4 mb-2;
+  }
+
+  .prose p {
+    @apply mb-4;
+  }
+
+  .prose img {
+    @apply rounded-lg my-4;
+  }
+
+  .prose a {
+    @apply text-primary-600 hover:underline;
+  }
+
+  .prose ul, .prose ol {
+    @apply mb-4 ml-6;
+  }
+
+  .prose li {
+    @apply mb-2;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-primary-500 pl-4 italic my-4;
+  }
+}
+
+/* Leaflet map z-index fix */
+.leaflet-container {
+  z-index: 1;
+}
+
+.leaflet-control-container {
+  z-index: 400;
+}
+
+.leaflet-popup-pane {
+  z-index: 401;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 402;
+}
+
+/* Ensure modal appears above Leaflet map */
+[style*="z-index: 9999"],
+[style*="z-index: 10000"] {
+  position: fixed !important;
 }

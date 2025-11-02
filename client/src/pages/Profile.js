@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { User, MapPin, Settings, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, MapPin, Settings, Heart, Trash2, AlertTriangle } from "lucide-react";
 
 const Profile = () => {
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfile, deleteAccount } = useAuth();
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         firstName: user?.firstName || "",
@@ -16,6 +18,9 @@ const Profile = () => {
         },
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -61,6 +66,21 @@ const Profile = () => {
             },
         });
         setIsEditing(false);
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText !== "DELETE") {
+            return;
+        }
+
+        setIsDeleting(true);
+        const result = await deleteAccount();
+        setIsDeleting(false);
+
+        if (result.success) {
+            setShowDeleteModal(false);
+            navigate("/");
+        }
     };
 
     if (!user) {
@@ -204,12 +224,28 @@ const Profile = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Member since</span>
-                                <span className="text-gray-900">{new Date(user.createdAt).toLocaleDateString('en-GB')}</span>
+                                <span className="text-gray-900">
+                                    {user.createdAt 
+                                      ? new Date(user.createdAt).toLocaleDateString('en-GB', { 
+                                          year: 'numeric', 
+                                          month: 'short', 
+                                          day: 'numeric' 
+                                        })
+                                      : 'N/A'}
+                                </span>
                             </div>
                             {user.lastLogin && (
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Last login</span>
-                                    <span className="text-gray-900">{new Date(user.lastLogin).toLocaleDateString('en-GB')}</span>
+                                    <span className="text-gray-900">
+                                        {user.lastLogin 
+                                          ? new Date(user.lastLogin).toLocaleDateString('en-GB', { 
+                                              year: 'numeric', 
+                                              month: 'short', 
+                                              day: 'numeric' 
+                                            })
+                                          : 'N/A'}
+                                    </span>
                                 </div>
                             )}
                             <div className="flex justify-between">
@@ -237,8 +273,95 @@ const Profile = () => {
                             </a>
                         </div>
                     </div>
+
+                    {/* Delete Account */}
+                    <div className="card border-red-200 bg-red-50">
+                        <h3 className="text-lg font-semibold text-red-900 mb-2 flex items-center">
+                            <AlertTriangle className="h-5 w-5 mr-2" />
+                            Danger Zone
+                        </h3>
+                        <p className="text-sm text-red-700 mb-4">
+                            Once you delete your account, there is no going back. Please be certain.
+                        </p>
+                        <button
+                            onClick={() => setShowDeleteModal(true)}
+                            className="btn-outline border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400 flex items-center space-x-2"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Delete Account</span>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Delete Account Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-red-100 p-2 rounded-full">
+                                <AlertTriangle className="h-6 w-6 text-red-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">Delete Account</h3>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <p className="text-gray-700">
+                                This action cannot be undone. This will permanently delete your account and remove all associated data including:
+                            </p>
+                            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+                                <li>Your profile and personal information</li>
+                                <li>All your trips and travel plans</li>
+                                <li>All your collections</li>
+                                <li>All your stories and posts</li>
+                                <li>Your visited countries and wishlist</li>
+                                <li>All your social connections</li>
+                            </ul>
+                            <p className="text-gray-700 mt-4">
+                                To confirm, please type <strong className="text-red-600">DELETE</strong> in the box below:
+                            </p>
+                        </div>
+
+                        <input
+                            type="text"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            placeholder="Type DELETE to confirm"
+                            className="input-field w-full"
+                            autoFocus
+                        />
+
+                        <div className="flex justify-end space-x-3 pt-2">
+                            <button
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setDeleteConfirmText("");
+                                }}
+                                className="btn-secondary"
+                                disabled={isDeleting}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <span>Deleting...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4" />
+                                        <span>Delete Account</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,10 +17,51 @@ import {
   Mountain,
   Building,
   Star,
-  Heart
+  Heart,
+  Filter,
+  Clock,
+  DollarSign as DollarIcon,
+  ExternalLink
 } from 'lucide-react';
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icons in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Component to handle image loading errors
+const ImageWithErrorHandling = ({ src, alt, className, onClick, onError, ...props }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const handleError = () => {
+    setImageError(true);
+    if (onError) onError();
+  };
+
+  if (imageError || !src) {
+    return null; // Don't render anything if image fails to load or no src
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onClick={onClick}
+      onError={handleError}
+      style={{ display: imageError ? 'none' : 'block' }}
+      {...props}
+    />
+  );
+};
 
 const CountryDetail = () => {
   const { id } = useParams();
@@ -116,15 +157,76 @@ const CountryDetail = () => {
     return num?.toString();
   };
 
-  const getAttractionImages = () => {
-    return country?.data?.touristAttractions
-      ?.filter(attraction => attraction.imageUrl)
-      ?.map(attraction => ({
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedAttraction, setSelectedAttraction] = useState(null);
+  const [mapView, setMapView] = useState(false);
+
+  // Show map by default if there are attractions with coordinates
+  useEffect(() => {
+    if (country?.data?.touristAttractions) {
+      const hasAttractionsWithCoords = country.data.touristAttractions.some(
+        a => a.coordinates?.latitude && a.coordinates?.longitude
+      );
+      if (hasAttractionsWithCoords) {
+        setMapView(true);
+      }
+    }
+  }, [country?.data]);
+
+  const [imageErrors, setImageErrors] = useState(new Set());
+
+  const getAttractionImages = (attraction) => {
+    const images = [];
+    // Add images from images array
+    if (attraction.images && attraction.images.length > 0) {
+      attraction.images.forEach(img => {
+        const imageUrl = img.url;
+        // Only include images that haven't failed to load
+        if (!imageErrors.has(imageUrl)) {
+          images.push({
+            original: imageUrl,
+            thumbnail: imageUrl,
+            description: img.caption || attraction.name
+          });
+        }
+      });
+    }
+    // Add legacy imageUrl if no images array and it hasn't failed
+    if (images.length === 0 && attraction.imageUrl && !imageErrors.has(attraction.imageUrl)) {
+      images.push({
         original: attraction.imageUrl,
         thumbnail: attraction.imageUrl,
         description: attraction.name
-      })) || [];
+      });
+    }
+    return images;
   };
+
+  const handleImageError = (imageUrl) => {
+    setImageErrors(prev => new Set([...prev, imageUrl]));
+  };
+
+
+  const filteredAttractions = country?.data?.touristAttractions?.filter(attraction => {
+    if (selectedCategory === 'all') return true;
+    return attraction.category === selectedCategory;
+  }) || [];
+
+  const attractionsWithCoords = filteredAttractions.filter(a => a.coordinates?.latitude && a.coordinates?.longitude);
+  
+  const getMapCenter = () => {
+    if (attractionsWithCoords.length === 0) {
+      return country?.data?.geographicLocation?.coordinates 
+        ? [country.data.geographicLocation.coordinates.latitude, country.data.geographicLocation.coordinates.longitude]
+        : [0, 0];
+    }
+    
+    const avgLat = attractionsWithCoords.reduce((sum, a) => sum + a.coordinates.latitude, 0) / attractionsWithCoords.length;
+    const avgLng = attractionsWithCoords.reduce((sum, a) => sum + a.coordinates.longitude, 0) / attractionsWithCoords.length;
+    return [avgLat, avgLng];
+  };
+
+  const categories = [...new Set(country?.data?.touristAttractions?.map(a => a.category).filter(Boolean))];
 
   if (isLoading) {
     return (
@@ -193,7 +295,7 @@ const CountryDetail = () => {
       {/* Country Header */}
       <div className="card">
         <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
-          <img
+          <ImageWithErrorHandling
             src={countryData.flag}
             alt={`Flag of ${countryData.name}`}
             loading="lazy"
@@ -277,7 +379,7 @@ const CountryDetail = () => {
                 </span>
               </div>
             )}
-            {countryData.geographicLocation?.coastline && (
+            {!!countryData.geographicLocation?.coastline && (
               <div>
                 <span className="font-semibold">Coastline: </span>
                 <span className="text-gray-600">
@@ -442,44 +544,336 @@ const CountryDetail = () => {
 
       {/* Tourist Attractions */}
       {countryData.touristAttractions?.length > 0 && (
-        <div className="card">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-            <Mountain className="h-6 w-6 mr-2" />
-            Tourist Attractions
-          </h2>
-          
-          {/* Image Gallery */}
-          {getAttractionImages().length > 0 && (
-            <div className="mb-6">
-              <ImageGallery items={getAttractionImages()} />
+        <div className="space-y-6">
+          <div className="card">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center mb-4 md:mb-0">
+                <Mountain className="h-6 w-6 mr-2" />
+                Tourist Attractions ({countryData.touristAttractions.length})
+              </h2>
+              
+              {/* Filter and View Toggle */}
+              <div className="flex items-center space-x-4">
+                {categories.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4 text-gray-600" />
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="input-field py-1 text-sm"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setMapView(true)}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                      mapView ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600'
+                    }`}
+                  >
+                    Map
+                  </button>
+                  <button
+                    onClick={() => setMapView(false)}
+                    className={`px-3 py-1 rounded text-sm transition-colors ${
+                      !mapView ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600'
+                    }`}
+                  >
+                    List
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Map View */}
+            {mapView && filteredAttractions.filter(a => a.coordinates?.latitude && a.coordinates?.longitude).length > 0 && (
+              <div className="mb-6" style={{ height: '500px' }}>
+                <MapContainer
+                  center={getMapCenter()}
+                  zoom={attractionsWithCoords.length === 1 ? 10 : 7}
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {attractionsWithCoords.map((attraction, index) => (
+                    <Marker
+                      key={index}
+                      position={[attraction.coordinates.latitude, attraction.coordinates.longitude]}
+                      eventHandlers={{
+                        click: () => setSelectedAttraction(attraction)
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-center">
+                          <h3 className="font-semibold text-gray-900 mb-1">{attraction.name}</h3>
+                          {attraction.location && (
+                            <p className="text-sm text-gray-600">{attraction.location}</p>
+                          )}
+                          {attraction.rating && (
+                            <div className="flex items-center justify-center space-x-1 mt-1">
+                              <Star className="h-3 w-3 text-yellow-400 fill-current" />
+                              <span className="text-xs">{attraction.rating}/5</span>
+                            </div>
+                          )}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            )}
+
+            {/* Attractions Grid/List */}
+            {filteredAttractions.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredAttractions.map((attraction, index) => {
+                  const images = getAttractionImages(attraction);
+                  return (
+                    <div key={index} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                      {/* Images */}
+                      {images.length > 0 ? (
+                        <div className="relative h-48">
+                          {images.length === 1 ? (
+                            <ImageWithErrorHandling
+                              src={images[0].original}
+                              alt={attraction.name}
+                              className="w-full h-full object-cover cursor-pointer"
+                              onClick={() => setSelectedAttraction(attraction)}
+                              onError={() => handleImageError(images[0].original)}
+                            />
+                          ) : (
+                            <div className="relative h-full">
+                              <ImageWithErrorHandling
+                                src={images[0].original}
+                                alt={attraction.name}
+                                className="w-full h-full object-cover cursor-pointer"
+                                onClick={() => setSelectedAttraction(attraction)}
+                                onError={() => handleImageError(images[0].original)}
+                              />
+                              {images.length > 1 && (
+                                <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
+                                  +{images.length - 1} more
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                      
+                      {/* Content */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900 text-lg">{attraction.name}</h3>
+                          {attraction.rating && (
+                            <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              <span className="text-sm text-gray-600">{attraction.rating}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {attraction.description && (
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{attraction.description}</p>
+                        )}
+                        
+                        {attraction.location && (
+                          <div className="flex items-center space-x-1 text-sm text-gray-500 mb-2">
+                            <MapPin className="h-3 w-3" />
+                            <span>{attraction.location}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                          {attraction.category && (
+                            <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs rounded-full capitalize">
+                              {attraction.category}
+                            </span>
+                          )}
+                          {images.length > 1 && (
+                            <button
+                              onClick={() => setSelectedAttraction(attraction)}
+                              className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                            >
+                              View {images.length} photos
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No attractions found in this category.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Attraction Detail Modal */}
+          {selectedAttraction && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 !mt-0" style={{ zIndex: 9999 }} onClick={() => setSelectedAttraction(null)}>
+              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ zIndex: 10000 }} onClick={(e) => e.stopPropagation()}>
+                <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedAttraction.name}</h2>
+                  <button
+                    onClick={() => setSelectedAttraction(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                
+                <div className="p-6">
+                  {/* Image Gallery */}
+                  {(() => {
+                    const modalImages = getAttractionImages(selectedAttraction);
+                    // Filter out images that have already failed
+                    const validImages = modalImages.filter(img => 
+                      img.original && !imageErrors.has(img.original)
+                    );
+                    return validImages.length > 0 && (
+                      <div className="mb-6">
+                        <ImageGallery 
+                          items={validImages}
+                          showPlayButton={false}
+                          showFullscreenButton={true}
+                        />
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Details */}
+                  <div className="space-y-4">
+                    {selectedAttraction.description && (
+                      <p className="text-gray-700 leading-relaxed">{selectedAttraction.description}</p>
+                    )}
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {selectedAttraction.location && (
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Location</p>
+                            <p className="text-gray-600">{selectedAttraction.location}</p>
+                            {selectedAttraction.coordinates && (
+                              <a
+                                href={`https://www.google.com/maps?q=${selectedAttraction.coordinates.latitude},${selectedAttraction.coordinates.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary-600 hover:underline text-sm flex items-center space-x-1 mt-1"
+                              >
+                                <span>Open in Google Maps</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedAttraction.category && (
+                        <div className="flex items-start space-x-2">
+                          <Mountain className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Category</p>
+                            <p className="text-gray-600 capitalize">{selectedAttraction.category}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedAttraction.openingHours && (
+                        <div className="flex items-start space-x-2">
+                          <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Opening Hours</p>
+                            <p className="text-gray-600">{selectedAttraction.openingHours}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedAttraction.admissionFee && (
+                        <div className="flex items-start space-x-2">
+                          <DollarIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Admission Fee</p>
+                            <p className="text-gray-600">{selectedAttraction.admissionFee}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedAttraction.rating && (
+                        <div className="flex items-start space-x-2">
+                          <Star className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Rating</p>
+                            <div className="flex items-center space-x-1">
+                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              <span className="text-gray-600">{selectedAttraction.rating}/5</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedAttraction.website && (
+                        <div className="flex items-start space-x-2">
+                          <Globe className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Website</p>
+                            <a
+                              href={selectedAttraction.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-600 hover:underline text-sm flex items-center space-x-1"
+                            >
+                              <span>Visit Website</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Map for single attraction */}
+                    {selectedAttraction.coordinates && (
+                      <div className="mt-6" style={{ height: '300px' }}>
+                        <MapContainer
+                          center={[selectedAttraction.coordinates.latitude, selectedAttraction.coordinates.longitude]}
+                          zoom={13}
+                          style={{ height: '100%', width: '100%' }}
+                          scrollWheelZoom={true}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <Marker
+                            position={[selectedAttraction.coordinates.latitude, selectedAttraction.coordinates.longitude]}
+                          >
+                            <Popup>
+                              <div className="text-center">
+                                <h3 className="font-semibold">{selectedAttraction.name}</h3>
+                                {selectedAttraction.location && (
+                                  <p className="text-sm text-gray-600">{selectedAttraction.location}</p>
+                                )}
+                              </div>
+                            </Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            {countryData.touristAttractions.map((attraction, index) => (
-              <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{attraction.name}</h3>
-                  {attraction.rating && (
-                    <div className="flex items-center space-x-1">
-                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600">{attraction.rating}</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-gray-600 mb-2">{attraction.description}</p>
-                {attraction.location && (
-                  <p className="text-sm text-gray-500 mb-2">
-                    <MapPin className="h-3 w-3 inline mr-1" />
-                    {attraction.location}
-                  </p>
-                )}
-                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                  {attraction.category}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

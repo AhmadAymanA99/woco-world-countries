@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { usersAPI } from "../utils/api";
 import toast from "react-hot-toast";
 import { MapPin, Calendar, Star, Camera, Plus, X, Trash2, Globe } from "lucide-react";
+import WorldMap from "../components/WorldMap";
 
 const MyWorld = () => {
     const queryClient = useQueryClient();
@@ -134,6 +135,14 @@ const MyWorld = () => {
                     <div className="text-gray-600">Average Rating</div>
                 </div>
             </div>
+
+            {/* World Map */}
+            {visitedCountries?.data && visitedCountries.data.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Travel Map</h2>
+                <WorldMap visitedCountries={visitedCountries.data} height="500px" />
+              </div>
+            )}
 
             {/* Visited Countries */}
             {visitedCountries?.data?.length === 0 ? (

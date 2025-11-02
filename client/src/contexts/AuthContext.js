@@ -99,12 +99,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      await authAPI.deleteAccount();
+      localStorage.removeItem('token');
+      authAPI.removeAuthHeader();
+      setUser(null);
+      toast.success('Account deleted successfully');
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Account deletion failed';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
   const value = {
     user,
     login,
     register,
     logout,
     updateProfile,
+    deleteAccount,
     loading
   };
 

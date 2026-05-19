@@ -87,13 +87,16 @@ async function connectDB() {
   }
 }
 
-// Health check route
+// Health check routes (no DB required)
 app.get('/', (req, res) => {
   res.json({ 
     message: req.t('server.apiRunning'), 
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
+});
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Routes

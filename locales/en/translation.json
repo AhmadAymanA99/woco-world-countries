@@ -1,0 +1,104 @@
+{
+  "auth": {
+    "registerSuccess": "User registered successfully",
+    "emailOrUsernameExists": "User with this email or username already exists",
+    "serverErrorRegistration": "Server error during registration",
+    "invalidCredentials": "Invalid credentials",
+    "loginSuccess": "Login successful",
+    "serverErrorLogin": "Server error during login",
+    "serverError": "Server error",
+    "usernameTaken": "Username already taken",
+    "profileUpdated": "Profile updated successfully",
+    "serverErrorDeletion": "Server error during account deletion",
+    "accountDeleted": "Account and all associated data deleted successfully"
+  },
+  "countries": {
+    "serverError": "Server error",
+    "notFound": "Country not found",
+    "compareIdsRequired": "Please provide 2-4 country IDs",
+    "someCountriesNotFound": "Some countries not found"
+  },
+  "users": {
+    "serverError": "Server error",
+    "countryNotFound": "Country not found",
+    "visitedAdded": "Country added to visited list",
+    "visitUpdated": "Visit record updated",
+    "visitNotFound": "Visit record not found",
+    "visitedRemoved": "Country removed from visited list",
+    "noPhoto": "No photo uploaded",
+    "maxPhotos": "Maximum 10 photos allowed per country",
+    "photoUploadFailed": "Photo upload failed",
+    "photoUploaded": "Photo uploaded successfully",
+    "invalidPhotoIndex": "Invalid photo index",
+    "photoNotFound": "Photo not found",
+    "photoDeleted": "Photo deleted successfully",
+    "wishlistExists": "Country already in wishlist",
+    "wishlistAdded": "Country added to wishlist",
+    "wishlistRemoved": "Country removed from wishlist"
+  },
+  "stories": {
+    "serverError": "Server error",
+    "notFound": "Story not found",
+    "notAuthorized": "Not authorized",
+    "deleted": "Story deleted",
+    "countryNotFound": "Country not found",
+    "commentNotFound": "Comment not found",
+    "commentDeleted": "Comment deleted"
+  },
+  "trips": {
+    "serverError": "Server error",
+    "notFound": "Trip not found",
+    "deleted": "Trip deleted",
+    "countryNotFound": "Country not found"
+  },
+  "collections": {
+    "serverError": "Server error",
+    "notFound": "Collection not found",
+    "notAuthorized": "Not authorized",
+    "deleted": "Collection deleted",
+    "countryNotFound": "Country not found"
+  },
+  "social": {
+    "userNotFound": "User not found",
+    "serverError": "Server error",
+    "cannotFollowSelf": "Cannot follow yourself"
+  },
+  "analytics": {
+    "serverError": "Server error"
+  },
+  "attractions": {
+    "countryNotFound": "Country not found",
+    "serverError": "Server error",
+    "notFound": "Attraction not found",
+    "added": "Attraction added successfully",
+    "updated": "Attraction updated successfully",
+    "deleted": "Attraction deleted successfully",
+    "noImage": "No image uploaded",
+    "imageUploadFailed": "Image upload failed",
+    "imageAdded": "Image added successfully"
+  },
+  "middleware": {
+    "noToken": "No token, authorization denied",
+    "tokenInvalid": "Token is not valid"
+  },
+  "validation": {
+    "countryIdRequired": "Valid country ID is required",
+    "visitDateRequired": "Valid visit date is required",
+    "durationMustBeNumber": "Duration must be a number",
+    "ratingBetween1And5": "Rating must be between 1 and 5",
+    "validEmail": "Please provide a valid email",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordRequired": "Password is required",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "usernameMinLength": "Username must be at least 3 characters",
+    "firstNameNotEmpty": "First name cannot be empty",
+    "lastNameNotEmpty": "Last name cannot be empty",
+    "imageFilesOnly": "Only image files are allowed"
+  },
+  "server": {
+    "apiRunning": "WoCo API is running!",
+    "somethingWentWrong": "Something went wrong!",
+    "routeNotFound": "Route not found"
+  }
+}

@@ -22,7 +22,7 @@ const upload = multer({
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error(req.t('validation.imageFilesOnly')), false);
     }
   }
 });
@@ -41,7 +41,7 @@ router.get('/', auth, async (req, res) => {
     res.json(trips);
   } catch (error) {
     console.error('Get trips error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('trips.serverError') });
   }
 });
 
@@ -54,13 +54,13 @@ router.get('/:id', auth, async (req, res) => {
     }).populate('countries.country', 'name code flag continent capital');
 
     if (!trip) {
-      return res.status(404).json({ message: 'Trip not found' });
+      return res.status(404).json({ message: req.t('trips.notFound') });
     }
 
     res.json(trip);
   } catch (error) {
     console.error('Get trip error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('trips.serverError') });
   }
 });
 
@@ -97,7 +97,7 @@ router.post('/', auth, [
     res.status(201).json(trip);
   } catch (error) {
     console.error('Create trip error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('trips.serverError') });
   }
 });
 
@@ -110,7 +110,7 @@ router.put('/:id', auth, async (req, res) => {
     });
 
     if (!trip) {
-      return res.status(404).json({ message: 'Trip not found' });
+      return res.status(404).json({ message: req.t('trips.notFound') });
     }
 
     Object.assign(trip, req.body);
@@ -120,7 +120,7 @@ router.put('/:id', auth, async (req, res) => {
     res.json(trip);
   } catch (error) {
     console.error('Update trip error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('trips.serverError') });
   }
 });
 
@@ -133,14 +133,14 @@ router.delete('/:id', auth, async (req, res) => {
     });
 
     if (!trip) {
-      return res.status(404).json({ message: 'Trip not found' });
+      return res.status(404).json({ message: req.t('trips.notFound') });
     }
 
     await trip.deleteOne();
-    res.json({ message: 'Trip deleted' });
+    res.json({ message: req.t('trips.deleted') });
   } catch (error) {
     console.error('Delete trip error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('trips.serverError') });
   }
 });
 
@@ -160,12 +160,12 @@ router.post('/:id/countries', auth, [
     });
 
     if (!trip) {
-      return res.status(404).json({ message: 'Trip not found' });
+      return res.status(404).json({ message: req.t('trips.notFound') });
     }
 
     const country = await Country.findById(req.body.countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('trips.countryNotFound') });
     }
 
     trip.countries.push({
@@ -183,7 +183,7 @@ router.post('/:id/countries', auth, [
     res.json(trip);
   } catch (error) {
     console.error('Add country to trip error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('trips.serverError') });
   }
 });
 

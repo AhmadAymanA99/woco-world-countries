@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 require('dotenv').config({ path: './config.env' });
 
 const app = express();
@@ -31,18 +32,61 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+// i18n middleware
+const i18next = require('./config/i18n');
+const i18nextMiddleware = require('i18next-http-middleware');
+app.use(i18nextMiddleware.handle(i18next));
+
+// MongoDB connection with in-memory fallback
+async function connectDB() {
+  let isInMemory = false;
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+    });
+    console.log('MongoDB connected successfully (Atlas)');
+  } catch (err) {
+    console.warn('Atlas connection failed, starting in-memory MongoDB...');
+    isInMemory = true;
+    try {
+      const mongod = await MongoMemoryServer.create({
+        instance: { dbName: 'woco' },
+      });
+      const uri = await mongod.getUri();
+      await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log('MongoDB connected successfully (in-memory)');
+    } catch (memErr) {
+      console.error('Failed to start in-memory MongoDB:', memErr.message);
+      process.exit(1);
+    }
+  }
+
+  // Auto-seed if database is empty (in-memory mode)
+  if (isInMemory) {
+    const Country = require('./models/Country');
+    const count = await Country.countDocuments();
+    if (count === 0) {
+      console.log('Seeding database with country data...');
+      const { allCountries } = require('./seed');
+      // Insert in batches to avoid memory issues
+      const batchSize = 50;
+      for (let i = 0; i < allCountries.length; i += batchSize) {
+        await Country.insertMany(allCountries.slice(i, i + batchSize));
+      }
+      console.log(`Seeded ${allCountries.length} countries`);
+    }
+  }
+}
 
 // Health check route
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'WoCo API is running!', 
+    message: req.t('server.apiRunning'), 
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
@@ -63,20 +107,23 @@ app.use('/api/attractions', require('./routes/attractions'));
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ 
-    message: 'Something went wrong!',
+    message: req.t('server.somethingWentWrong'),
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+    res.status(404).json({ message: req.t('server.routeNotFound') });
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Wait for DB connection before starting server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
 
 module.exports = app;

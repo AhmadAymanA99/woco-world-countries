@@ -1,20 +1,33 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const SEO = ({
-  title = 'WoCo - World Countries',
-  description = 'Discover detailed information about every country in the world. Track your travels, explore cultures, learn about population, GDP, landmarks, and traditions.',
+  title,
+  description,
   image = '/logo512.png',
   type = 'website',
   url = '/',
-  keywords = 'countries, world countries, travel tracker, country information, world map',
-  author = 'WoCo Team',
+  keywords,
+  author,
 }) => {
+  const { t, i18n } = useTranslation();
+  const defaultTitle = t('seo.defaultTitle');
+  const defaultDescription = t('seo.defaultDescription');
+  const defaultKeywords = t('seo.defaultKeywords');
+  const defaultAuthor = t('seo.defaultAuthor');
+  const siteName = t('seo.siteName');
+
+  const resolvedTitle = title ?? defaultTitle;
+  const resolvedDescription = description ?? defaultDescription;
+  const resolvedKeywords = keywords ?? defaultKeywords;
+  const resolvedAuthor = author ?? defaultAuthor;
+
+  const baseUrl = process.env.REACT_APP_URL || 'https://woco-world-countries.vercel.app';
+
   useEffect(() => {
-    // Update title
-    const fullTitle = title.includes('WoCo') ? title : `${title} | WoCo - World Countries`;
+    const fullTitle = resolvedTitle.includes('WoCo') ? resolvedTitle : `${resolvedTitle} | ${defaultTitle}`;
     document.title = fullTitle;
 
-    // Update or create meta tags
     const updateMetaTag = (name, content) => {
       let element = document.querySelector(`meta[name="${name}"]`);
       if (!element) {
@@ -23,6 +36,11 @@ export const SEO = ({
         document.head.appendChild(element);
       }
       element.setAttribute('content', content);
+    };
+
+    const removeMetaTag = (name) => {
+      const element = document.querySelector(`meta[name="${name}"]`);
+      if (element) element.remove();
     };
 
     const updateOGTag = (property, content) => {
@@ -35,31 +53,62 @@ export const SEO = ({
       element.setAttribute('content', content);
     };
 
-    const fullUrl = `${process.env.REACT_APP_URL || window.location.origin}${url}`;
-    const fullImage = `${process.env.REACT_APP_URL || window.location.origin}${image}`;
+    const updateLinkTag = (rel, href, extra = {}) => {
+      let element = document.querySelector(`link[rel="${rel}"]${extra.hreflang ? `[hreflang="${extra.hreflang}"]` : ''}`);
+      if (!element) {
+        element = document.createElement('link');
+        element.setAttribute('rel', rel);
+        if (extra.hreflang) element.setAttribute('hreflang', extra.hreflang);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('href', href);
+    };
 
-    // Update meta tags
-    updateMetaTag('title', fullTitle);
-    updateMetaTag('description', description);
-    updateMetaTag('keywords', keywords);
-    updateMetaTag('author', author);
-    
-    // Update Open Graph tags
+    const removeLinkTag = (rel, hreflang) => {
+      const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]:not([hreflang])`;
+      const element = document.querySelector(selector);
+      if (element) element.remove();
+    };
+
+    const fullUrl = `${baseUrl}${url}`;
+    const fullImage = image.startsWith('http') ? image : `${baseUrl}${image}`;
+
+    // Title and description
+    updateMetaTag('description', resolvedDescription);
+    updateMetaTag('keywords', resolvedKeywords);
+    updateMetaTag('author', resolvedAuthor);
+
+    // Canonical URL
+    removeLinkTag('canonical');
+    updateLinkTag('canonical', fullUrl);
+
+    // Hreflang
+    removeLinkTag('alternate', 'en');
+    removeLinkTag('alternate', 'ar');
+    removeLinkTag('alternate', 'x-default');
+    updateLinkTag('alternate', `${baseUrl}${url}`, { hreflang: 'en' });
+    updateLinkTag('alternate', `${baseUrl}${url}`, { hreflang: 'ar' });
+    updateLinkTag('alternate', `${baseUrl}${url}`, { hreflang: 'x-default' });
+
+    // Open Graph
     updateOGTag('og:type', type);
     updateOGTag('og:url', fullUrl);
     updateOGTag('og:title', fullTitle);
-    updateOGTag('og:description', description);
+    updateOGTag('og:description', resolvedDescription);
     updateOGTag('og:image', fullImage);
-    updateOGTag('og:site_name', 'WoCo - World Countries');
-    
-    // Update Twitter tags
+    updateOGTag('og:site_name', siteName);
+    updateOGTag('og:locale', i18n.language === 'ar' ? 'ar_SA' : 'en_US');
+
+    // Twitter
     updateMetaTag('twitter:card', 'summary_large_image');
     updateMetaTag('twitter:url', fullUrl);
     updateMetaTag('twitter:title', fullTitle);
-    updateMetaTag('twitter:description', description);
+    updateMetaTag('twitter:description', resolvedDescription);
     updateMetaTag('twitter:image', fullImage);
-  }, [title, description, image, type, url, keywords, author]);
+
+    // HTML lang attribute
+    document.documentElement.setAttribute('lang', i18n.language === 'ar' ? 'ar' : 'en');
+  }, [resolvedTitle, resolvedDescription, image, type, url, resolvedKeywords, resolvedAuthor, defaultTitle, siteName, baseUrl, i18n.language]);
 
   return null;
 };
-

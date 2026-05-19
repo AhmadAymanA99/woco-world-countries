@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const Collection = require('../models/Collection');
 const Country = require('../models/Country');
 const auth = require('../middleware/auth');
+const { localizeCountry } = require('../utils/localizeCountry');
 
 const router = express.Router();
 
@@ -16,19 +17,32 @@ router.get('/', async (req, res) => {
     if (category) query.category = category;
     if (user) query.user = user;
 
-    const collections = await Collection.find(query)
-      .populate('user', 'username firstName lastName avatar')
-      .populate('countries', 'name code flag')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+     const collections = await Collection.find(query)
+       .populate('user', 'username firstName lastName avatar')
+       .populate('countries', 'name code flag')
+       .sort({ createdAt: -1 })
+       .skip(skip)
+       .limit(parseInt(limit));
+     
+     // Localize country data for each collection
+     const localizedCollections = collections.map(collection => {
+       if (collection.countries && Array.isArray(collection.countries)) {
+         collection.countries = collection.countries.map(country => {
+           if (country) {
+             return localizeCountry(country.toObject ? country.toObject() : country, req.language);
+           }
+           return country;
+         });
+       }
+       return collection;
+     });
 
     const total = await Collection.countDocuments(query);
 
     res.json({ collections, total, page: parseInt(page), limit: parseInt(limit) });
   } catch (error) {
     console.error('Get collections error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -42,7 +56,7 @@ router.get('/my-collections', auth, async (req, res) => {
     res.json(collections);
   } catch (error) {
     console.error('Get my collections error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -54,13 +68,13 @@ router.get('/:id', async (req, res) => {
       .populate('countries', 'name code flag continent capital');
 
     if (!collection) {
-      return res.status(404).json({ message: 'Collection not found' });
+      return res.status(404).json({ message: req.t('collections.notFound') });
     }
 
     res.json(collection);
   } catch (error) {
     console.error('Get collection error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -91,7 +105,7 @@ router.post('/', auth, [
     res.status(201).json(collection);
   } catch (error) {
     console.error('Create collection error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -100,11 +114,11 @@ router.put('/:id', auth, async (req, res) => {
   try {
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
-      return res.status(404).json({ message: 'Collection not found' });
+      return res.status(404).json({ message: req.t('collections.notFound') });
     }
 
     if (collection.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('collections.notAuthorized') });
     }
 
     Object.assign(collection, req.body);
@@ -114,7 +128,7 @@ router.put('/:id', auth, async (req, res) => {
     res.json(collection);
   } catch (error) {
     console.error('Update collection error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -123,18 +137,18 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
-      return res.status(404).json({ message: 'Collection not found' });
+      return res.status(404).json({ message: req.t('collections.notFound') });
     }
 
     if (collection.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('collections.notAuthorized') });
     }
 
     await collection.deleteOne();
-    res.json({ message: 'Collection deleted' });
+    res.json({ message: req.t('collections.deleted') });
   } catch (error) {
     console.error('Delete collection error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -143,16 +157,16 @@ router.post('/:id/countries/:countryId', auth, async (req, res) => {
   try {
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
-      return res.status(404).json({ message: 'Collection not found' });
+      return res.status(404).json({ message: req.t('collections.notFound') });
     }
 
     if (collection.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('collections.notAuthorized') });
     }
 
     const country = await Country.findById(req.params.countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('collections.countryNotFound') });
     }
 
     if (!collection.countries.includes(req.params.countryId)) {
@@ -164,7 +178,7 @@ router.post('/:id/countries/:countryId', auth, async (req, res) => {
     res.json(collection);
   } catch (error) {
     console.error('Add country to collection error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 
@@ -173,11 +187,11 @@ router.delete('/:id/countries/:countryId', auth, async (req, res) => {
   try {
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
-      return res.status(404).json({ message: 'Collection not found' });
+      return res.status(404).json({ message: req.t('collections.notFound') });
     }
 
     if (collection.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('collections.notAuthorized') });
     }
 
     collection.countries = collection.countries.filter(
@@ -189,7 +203,7 @@ router.delete('/:id/countries/:countryId', auth, async (req, res) => {
     res.json(collection);
   } catch (error) {
     console.error('Remove country from collection error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('collections.serverError') });
   }
 });
 

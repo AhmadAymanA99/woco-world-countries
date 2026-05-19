@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { countriesAPI } from '../utils/api';
+import Skeleton from '../components/Skeleton';
 import { Search, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
+import { useTranslation } from 'react-i18next';
+import { fmtNum, localizeName, localizeContinent } from '../utils/format';
+import { SEO } from '../components/SEO';
 
 const CompareCountries = () => {
+  const { t } = useTranslation();
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -64,21 +69,21 @@ const CompareCountries = () => {
     
     return [
       {
-        name: 'Population (Millions)',
+        name: t('compare.populationMillions'),
         ...countries.reduce((acc, c, i) => {
           acc[`country${i + 1}`] = c.population?.total ? (c.population.total / 1000000).toFixed(1) : 0;
           return acc;
         }, {})
       },
       {
-        name: 'GDP (Billions)',
+        name: t('compare.gdpBillions'),
         ...countries.reduce((acc, c, i) => {
           acc[`country${i + 1}`] = c.gdp?.total ? (c.gdp.total / 1000000000).toFixed(1) : 0;
           return acc;
         }, {})
       },
       {
-        name: 'Area (1000 km²)',
+        name: t('compare.areaThousandKm'),
         ...countries.reduce((acc, c, i) => {
           acc[`country${i + 1}`] = c.geographicLocation?.area ? (c.geographicLocation.area / 1000).toFixed(1) : 0;
           return acc;
@@ -134,39 +139,43 @@ const CompareCountries = () => {
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
+      <SEO
+        title={t('seo.compareTitle')}
+        description={t('compare.description')}
+        url="/compare"
+      />
+      {/* Header */}
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Compare Countries</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Select 2-4 countries to compare their statistics, demographics, and more.
-        </p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t('compare.title')}</h1>
+        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{t('compare.description')}</p>
       </div>
 
       {/* Country Selection */}
       <div className="card">
-        <h2 className="text-xl font-semibold mb-4">Selected Countries</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('compare.selectedCountries')}</h2>
         <div className="space-y-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
-              placeholder="Search countries..."
+              placeholder={t('countries.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10"
+              className="input-field ps-10"
             />
           </div>
 
           {searchResults.length > 0 && (
-            <div className="border border-gray-200 rounded-lg p-2 max-h-60 overflow-y-auto">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 max-h-60 overflow-y-auto">
               {searchResults.map(country => (
                 <button
                   key={country._id}
                   onClick={() => addCountry(country)}
-                  className="w-full flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   <img src={country.flag} alt={country.name} className="w-8 h-6 object-cover rounded" />
-                  <span className="flex-1 text-left">{country.name}</span>
+                  <span className="flex-1 text-start">{localizeName(country.name)}</span>
                 </button>
               ))}
             </div>
@@ -177,13 +186,13 @@ const CompareCountries = () => {
               {selectedCountries.map((country, index) => (
                 <div
                   key={country._id}
-                  className="flex items-center space-x-2 bg-primary-50 border border-primary-200 rounded-lg px-3 py-2"
+                  className="flex items-center gap-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg px-3 py-2"
                 >
                   <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded" />
-                  <span className="font-medium">{country.name}</span>
+                  <span className="font-medium">{localizeName(country.name)}</span>
                   <button
                     onClick={() => removeCountry(country._id)}
-                    className="text-gray-400 hover:text-red-600"
+                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -193,8 +202,8 @@ const CompareCountries = () => {
           )}
 
           {selectedCountries.length < 2 && (
-            <p className="text-sm text-gray-500 text-center py-4">
-              Select at least 2 countries to compare
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              {t('compare.selectCountries')}
             </p>
           )}
         </div>
@@ -202,8 +211,8 @@ const CompareCountries = () => {
 
       {/* Comparison Results */}
       {isLoading && selectedCountries.length >= 2 && (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="flex justify-center py-12 dark:bg-gray-700">
+          <Skeleton variant="avatar" />
         </div>
       )}
 
@@ -211,16 +220,16 @@ const CompareCountries = () => {
         <div className="space-y-6">
           {/* Detailed Comparison Table */}
           <div className="card overflow-x-auto">
-            <h2 className="text-xl font-semibold mb-4">Detailed Comparison</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('compare.detailed')}</h2>
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left p-3">Property</th>
+                  <th className="text-start p-3">{t('compare.property')}</th>
                   {comparisonData.data.map((country, index) => (
-                    <th key={country._id} className="text-left p-3">
-                      <div className="flex items-center space-x-2">
+                    <th key={country._id} className="text-start p-3">
+                      <div className="flex items-center gap-2">
                         <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded" />
-                        <span>{country.name}</span>
+                        <span>{localizeName(country.name)}</span>
                       </div>
                     </th>
                   ))}
@@ -228,62 +237,62 @@ const CompareCountries = () => {
               </thead>
               <tbody>
                 <tr className="border-b">
-                  <td className="p-3 font-medium">Continent</td>
+                  <td className="p-3 font-medium">{t('compare.continent')}</td>
                   {comparisonData.data.map(country => (
-                    <td key={country._id} className="p-3">{country.continent}</td>
+                    <td key={country._id} className="p-3">{localizeContinent(country.continent)}</td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="p-3 font-medium">Capital</td>
+                  <td className="p-3 font-medium">{t('compare.capital')}</td>
                   {comparisonData.data.map(country => (
-                    <td key={country._id} className="p-3">{country.capital || 'N/A'}</td>
+                    <td key={country._id} className="p-3">{country.capital || t('common.notApplicable')}</td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="p-3 font-medium">Population</td>
+                  <td className="p-3 font-medium">{t('compare.population')}</td>
                   {comparisonData.data.map(country => (
                     <td key={country._id} className="p-3">
                       {country.population?.total
                         ? `${(country.population.total / 1000000).toFixed(2)}M`
-                        : 'N/A'}
+                        : t('common.notApplicable')}
                     </td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="p-3 font-medium">GDP</td>
+                  <td className="p-3 font-medium">{t('compare.gdp')}</td>
                   {comparisonData.data.map(country => (
                     <td key={country._id} className="p-3">
                       {country.gdp?.total
                         ? `$${(country.gdp.total / 1000000000).toFixed(2)}B`
-                        : 'N/A'}
+                        : t('common.notApplicable')}
                     </td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="p-3 font-medium">GDP per Capita</td>
+                  <td className="p-3 font-medium">{t('compare.gdpPerCapita')}</td>
                   {comparisonData.data.map(country => (
                     <td key={country._id} className="p-3">
                       {country.gdp?.perCapita
-                        ? `$${country.gdp.perCapita.toLocaleString()}`
-                        : 'N/A'}
+                        ? `$${fmtNum(country.gdp.perCapita)}`
+                        : t('common.notApplicable')}
                     </td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="p-3 font-medium">Area</td>
+                  <td className="p-3 font-medium">{t('compare.area')}</td>
                   {comparisonData.data.map(country => (
                     <td key={country._id} className="p-3">
                       {country.geographicLocation?.area
-                        ? `${country.geographicLocation.area.toLocaleString()} km²`
-                        : 'N/A'}
+                        ? `${fmtNum(country.geographicLocation.area)} km²`
+                        : t('common.notApplicable')}
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="p-3 font-medium">Languages</td>
+                  <td className="p-3 font-medium">{t('compare.languages')}</td>
                   {comparisonData.data.map(country => (
                     <td key={country._id} className="p-3">
-                      {country.languages?.join(', ') || 'N/A'}
+                      {country.languages?.join(', ') || t('common.notApplicable')}
                     </td>
                   ))}
                 </tr>
@@ -295,7 +304,7 @@ const CompareCountries = () => {
           {chartData.length > 0 && (
             <>
               <div className="card">
-                <h2 className="text-xl font-semibold mb-4">Comparison Chart</h2>
+                <h2 className="text-xl font-semibold mb-4">{t('compare.comparisonChart')}</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -307,7 +316,7 @@ const CompareCountries = () => {
                         key={index}
                         dataKey={`country${index + 1}`}
                         fill={colors[index]}
-                        name={comparisonData.data[index].name}
+                        name={localizeName(comparisonData.data[index].name)}
                       />
                     ))}
                   </BarChart>
@@ -316,7 +325,7 @@ const CompareCountries = () => {
 
               {radarData.length > 0 && comparisonData?.data && (
                 <div className="card">
-                  <h2 className="text-xl font-semibold mb-4">Radar Comparison</h2>
+                  <h2 className="text-xl font-semibold mb-4">{t('compare.radar')}</h2>
                   <ResponsiveContainer width="100%" height={400}>
                     <RadarChart data={radarData}>
                       <PolarGrid />
@@ -325,7 +334,7 @@ const CompareCountries = () => {
                       {comparisonData.data.map((country, index) => (
                         <Radar
                           key={country._id}
-                          name={country.name}
+                          name={localizeName(country.name)}
                           dataKey={`country${index + 1}`}
                           stroke={colors[index % colors.length]}
                           fill={colors[index % colors.length]}

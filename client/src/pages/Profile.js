@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { User, MapPin, Settings, Heart, Trash2, AlertTriangle } from "lucide-react";
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../utils/format';
 
 const Profile = () => {
+    const { t } = useTranslation();
     const { user, updateProfile, deleteAccount } = useAuth();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
@@ -69,7 +72,7 @@ const Profile = () => {
     };
 
     const handleDeleteAccount = async () => {
-        if (deleteConfirmText !== "DELETE") {
+        if (deleteConfirmText !== t('profile.deleteConfirmToken')) {
             return;
         }
 
@@ -86,7 +89,7 @@ const Profile = () => {
     if (!user) {
         return (
             <div className="text-center py-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to view your profile</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.loginRequired')}</h2>
             </div>
         );
     }
@@ -95,8 +98,8 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto space-y-8">
             {/* Header */}
             <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">My Profile</h1>
-                <p className="text-gray-600">Manage your account settings and travel preferences</p>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t('profile.title')}</h1>
+                <p className="text-gray-600 dark:text-gray-400">{t('profile.description')}</p>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">
@@ -105,13 +108,13 @@ const Profile = () => {
                     {/* Basic Information */}
                     <div className="card">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                                <User className="h-6 w-6 mr-2" />
-                                Basic Information
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                                <User className="h-6 w-6 me-2" />
+                                {t('profile.personalInfo')}
                             </h2>
-                            <button onClick={() => setIsEditing(!isEditing)} className="btn-outline flex items-center space-x-1">
+                            <button onClick={() => setIsEditing(!isEditing)} className="btn-outline flex items-center gap-1">
                                 <Settings className="h-4 w-4" />
-                                <span>{isEditing ? "Cancel" : "Edit"}</span>
+                                <span>{isEditing ? t('common.cancel') : t('common.edit')}</span>
                             </button>
                         </div>
 
@@ -119,26 +122,26 @@ const Profile = () => {
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.firstName')}</label>
                                         <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} className="input-field" required />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.lastName')}</label>
                                         <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="input-field" required />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.username')}</label>
                                     <input type="text" name="username" value={formData.username} onChange={handleChange} className="input-field" required />
                                 </div>
 
-                                <div className="flex justify-end space-x-3">
+                                <div className="flex justify-end gap-3">
                                     <button type="button" onClick={handleCancel} className="btn-secondary">
-                                        Cancel
+                                        {t('common.cancel')}
                                     </button>
                                     <button type="submit" disabled={isLoading} className="btn-primary">
-                                        {isLoading ? "Saving..." : "Save Changes"}
+                                        {isLoading ? t('profile.updating') : t('profile.updateProfile')}
                                     </button>
                                 </div>
                             </form>
@@ -146,23 +149,23 @@ const Profile = () => {
                             <div className="space-y-4">
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                                        <p className="text-gray-900">{user.firstName}</p>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.firstName')}</label>
+                                        <p className="text-gray-900 dark:text-gray-100">{user.firstName}</p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                                        <p className="text-gray-900">{user.lastName}</p>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.lastName')}</label>
+                                        <p className="text-gray-900 dark:text-gray-100">{user.lastName}</p>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                                    <p className="text-gray-900">{user.username}</p>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.username')}</label>
+                                    <p className="text-gray-900 dark:text-gray-100">{user.username}</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                    <p className="text-gray-900">{user.email}</p>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.email')}</label>
+                                    <p className="text-gray-900 dark:text-gray-100">{user.email}</p>
                                 </div>
                             </div>
                         )}
@@ -170,46 +173,46 @@ const Profile = () => {
 
                     {/* Travel Preferences */}
                     <div className="card">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                            <MapPin className="h-6 w-6 mr-2" />
-                            Travel Preferences
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                            <MapPin className="h-6 w-6 me-2" />
+                            {t('profile.travelPreferences')}
                         </h2>
 
                         {isEditing ? (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Travel Style</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.travelStyle')}</label>
                                     <select name="preferences.travelStyle" value={formData.preferences.travelStyle} onChange={handleChange} className="input-field">
-                                        <option value="budget">Budget</option>
-                                        <option value="luxury">Luxury</option>
-                                        <option value="adventure">Adventure</option>
-                                        <option value="cultural">Cultural</option>
-                                        <option value="relaxation">Relaxation</option>
-                                        <option value="mixed">Mixed</option>
+                                        <option value="budget">{t('profile.travelStyleBudget')}</option>
+                                        <option value="luxury">{t('profile.travelStyleLuxury')}</option>
+                                        <option value="adventure">{t('profile.travelStyleAdventure')}</option>
+                                        <option value="cultural">{t('profile.travelStyleCultural')}</option>
+                                        <option value="relaxation">{t('profile.travelStyleRelaxation')}</option>
+                                        <option value="mixed">{t('profile.travelStyleMixed')}</option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Accommodation</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.accommodation')}</label>
                                     <select name="preferences.accommodation" value={formData.preferences.accommodation} onChange={handleChange} className="input-field">
-                                        <option value="hotel">Hotel</option>
-                                        <option value="hostel">Hostel</option>
-                                        <option value="airbnb">Airbnb</option>
-                                        <option value="camping">Camping</option>
-                                        <option value="mixed">Mixed</option>
+                                        <option value="hotel">{t('profile.accommodationHotel')}</option>
+                                        <option value="hostel">{t('profile.accommodationHostel')}</option>
+                                        <option value="airbnb">{t('profile.accommodationAirbnb')}</option>
+                                        <option value="camping">{t('profile.accommodationCamping')}</option>
+                                        <option value="mixed">{t('profile.accommodationMixed')}</option>
                                     </select>
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Travel Style</label>
-                                    <p className="text-gray-900 capitalize">{user.preferences?.travelStyle || "Not specified"}</p>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.travelStyle')}</label>
+                                    <p className="text-gray-900 dark:text-gray-100 capitalize">{user.preferences?.travelStyle || t('profile.notSpecified')}</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Accommodation</label>
-                                    <p className="text-gray-900 capitalize">{user.preferences?.accommodation || "Not specified"}</p>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('profile.accommodation')}</label>
+                                    <p className="text-gray-900 dark:text-gray-100 capitalize">{user.preferences?.accommodation || t('profile.notSpecified')}</p>
                                 </div>
                             </div>
                         )}
@@ -220,75 +223,67 @@ const Profile = () => {
                 <div className="space-y-6">
                     {/* Account Stats */}
                     <div className="card">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Stats</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('profile.accountStats')}</h3>
                         <div className="space-y-3">
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Member since</span>
-                                <span className="text-gray-900">
+                                <span className="text-gray-600 dark:text-gray-400">{t('profile.memberSince')}</span>
+                                <span className="text-gray-900 dark:text-gray-100">
                                     {user.createdAt 
-                                      ? new Date(user.createdAt).toLocaleDateString('en-GB', { 
-                                          year: 'numeric', 
-                                          month: 'short', 
-                                          day: 'numeric' 
-                                        })
-                                      : 'N/A'}
+                                      ? formatDate(user.createdAt)
+                                      : t('common.notAvailable', 'N/A')}
                                 </span>
                             </div>
                             {user.lastLogin && (
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Last login</span>
-                                    <span className="text-gray-900">
+                                    <span className="text-gray-600 dark:text-gray-400">{t('profile.lastLogin')}</span>
+                                    <span className="text-gray-900 dark:text-gray-100">
                                         {user.lastLogin 
-                                          ? new Date(user.lastLogin).toLocaleDateString('en-GB', { 
-                                              year: 'numeric', 
-                                              month: 'short', 
-                                              day: 'numeric' 
-                                            })
-                                          : 'N/A'}
+                                          ? formatDate(user.lastLogin)
+                                          : t('common.notAvailable', 'N/A')}
                                     </span>
                                 </div>
                             )}
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Countries visited</span>
-                                <span className="text-gray-900">{user.visitedCountries?.length || 0}</span>
+                                <span className="text-gray-600 dark:text-gray-400">{t('profile.countriesVisited')}</span>
+                                <span className="text-gray-900 dark:text-gray-100">{user.visitedCountries?.length || 0}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Wishlist items</span>
-                                <span className="text-gray-900">{user.wishlist?.length || 0}</span>
+                                <span className="text-gray-600 dark:text-gray-400">{t('profile.wishlistItems')}</span>
+                                <span className="text-gray-900 dark:text-gray-100">{user.wishlist?.length || 0}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Quick Actions */}
                     <div className="card">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('profile.quickActions')}</h3>
                         <div className="space-y-3">
-                            <a href="/my-world" className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                                <MapPin className="h-4 w-4 inline mr-2" />
-                                View My World
+                            <a href="/my-world" className="block w-full text-start px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <MapPin className="h-4 w-4 inline me-2" />
+                                {t('profile.viewMyWorld')}
                             </a>
-                            <a href="/countries" className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                                <Heart className="h-4 w-4 inline mr-2" />
-                                Explore Countries
+                            <a href="/countries" className="block w-full text-start px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <Heart className="h-4 w-4 inline me-2" />
+                                {t('profile.exploreCountries')}
                             </a>
                         </div>
                     </div>
 
                     {/* Delete Account */}
-                    <div className="card border-red-200 bg-red-50">
-                        <h3 className="text-lg font-semibold text-red-900 mb-2 flex items-center">
-                            <AlertTriangle className="h-5 w-5 mr-2" />
-                            Danger Zone
+                    <div className="card border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+                        <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center">
+                            <AlertTriangle className="h-5 w-5 me-2" />
+                            {t('profile.dangerZone')}
                         </h3>
-                        <p className="text-sm text-red-700 mb-4">
-                            Once you delete your account, there is no going back. Please be certain.
+                        <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                            {t('profile.dangerZoneDesc')}
                         </p>
                         <button
                             onClick={() => setShowDeleteModal(true)}
-                            className="btn-outline border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400 flex items-center space-x-2"
+                            className="btn-outline border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-400 dark:hover:border-red-500 flex items-center gap-2"
                         >
                             <Trash2 className="h-4 w-4" />
-                            <span>Delete Account</span>
+                            <span>{t('profile.deleteAccount')}</span>
                         </button>
                     </div>
                 </div>
@@ -297,28 +292,28 @@ const Profile = () => {
             {/* Delete Account Confirmation Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
-                        <div className="flex items-center space-x-3">
-                            <div className="bg-red-100 p-2 rounded-full">
-                                <AlertTriangle className="h-6 w-6 text-red-600" />
+                    <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
+                                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900">Delete Account</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t('profile.deleteAccount')}</h3>
                         </div>
                         
                         <div className="space-y-2">
-                            <p className="text-gray-700">
-                                This action cannot be undone. This will permanently delete your account and remove all associated data including:
+                            <p className="text-gray-700 dark:text-gray-300">
+                                {t('profile.deleteConfirmMessage')}
                             </p>
-                            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
-                                <li>Your profile and personal information</li>
-                                <li>All your trips and travel plans</li>
-                                <li>All your collections</li>
-                                <li>All your stories and posts</li>
-                                <li>Your visited countries and wishlist</li>
-                                <li>All your social connections</li>
+                            <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ms-2">
+                                <li>{t('profile.deleteItemProfile')}</li>
+                                <li>{t('profile.deleteItemTrips')}</li>
+                                <li>{t('profile.deleteItemCollections')}</li>
+                                <li>{t('profile.deleteItemStories')}</li>
+                                <li>{t('profile.deleteItemCountries')}</li>
+                                <li>{t('profile.deleteItemSocial')}</li>
                             </ul>
-                            <p className="text-gray-700 mt-4">
-                                To confirm, please type <strong className="text-red-600">DELETE</strong> in the box below:
+                            <p className="text-gray-700 dark:text-gray-300 mt-4">
+                                {t('profile.deleteConfirmInstruction')}
                             </p>
                         </div>
 
@@ -326,12 +321,12 @@ const Profile = () => {
                             type="text"
                             value={deleteConfirmText}
                             onChange={(e) => setDeleteConfirmText(e.target.value)}
-                            placeholder="Type DELETE to confirm"
+                            placeholder={t('profile.deleteConfirmPlaceholder')}
                             className="input-field w-full"
                             autoFocus
                         />
 
-                        <div className="flex justify-end space-x-3 pt-2">
+                        <div className="flex justify-end gap-3 pt-2">
                             <button
                                 onClick={() => {
                                     setShowDeleteModal(false);
@@ -340,21 +335,21 @@ const Profile = () => {
                                 className="btn-secondary"
                                 disabled={isDeleting}
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={handleDeleteAccount}
-                                disabled={deleteConfirmText !== "DELETE" || isDeleting}
-                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                                disabled={deleteConfirmText !== t('profile.deleteConfirmToken') || isDeleting}
+                                className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-700 dark:hover:bg-red-800 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                             >
                                 {isDeleting ? (
                                     <>
-                                        <span>Deleting...</span>
+                                        <span>{t('profile.deleting')}</span>
                                     </>
                                 ) : (
                                     <>
                                         <Trash2 className="h-4 w-4" />
-                                        <span>Delete Account</span>
+                                        <span>{t('profile.deleteAccount')}</span>
                                     </>
                                 )}
                             </button>

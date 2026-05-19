@@ -4,6 +4,7 @@ const cloudinary = require('cloudinary').v2;
 const { body, validationResult } = require('express-validator');
 const Country = require('../models/Country');
 const auth = require('../middleware/auth');
+const { localizeCountry } = require('../utils/localizeCountry');
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ const upload = multer({
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error(req.t('validation.imageFilesOnly')), false);
     }
   }
 });
@@ -33,17 +34,20 @@ router.get('/country/:countryId', async (req, res) => {
       .select('touristAttractions name code');
     
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('attractions.countryNotFound') });
     }
-
+    
+    // Localize the country data
+    const localizedCountry = localizeCountry(country, req.language);
+    
     res.json({
-      country: country.name,
-      code: country.code,
-      attractions: country.touristAttractions || []
+      country: localizedCountry.name,
+      code: localizedCountry.code,
+      attractions: localizedCountry.touristAttractions || []
     });
   } catch (error) {
     console.error('Get attractions error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('attractions.serverError') });
   }
 });
 
@@ -65,7 +69,7 @@ router.post('/country/:countryId', auth, [
 
     const country = await Country.findById(req.params.countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('attractions.countryNotFound') });
     }
 
     const { name, description, location, latitude, longitude, category, rating, openingHours, admissionFee, website } = req.body;
@@ -90,12 +94,12 @@ router.post('/country/:countryId', auth, [
     await country.save();
 
     res.status(201).json({
-      message: 'Attraction added successfully',
+      message: req.t('attractions.added'),
       attraction: country.touristAttractions[country.touristAttractions.length - 1]
     });
   } catch (error) {
     console.error('Add attraction error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('attractions.serverError') });
   }
 });
 
@@ -104,24 +108,24 @@ router.put('/country/:countryId/attraction/:attractionIndex', auth, async (req, 
   try {
     const country = await Country.findById(req.params.countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('attractions.countryNotFound') });
     }
 
     const attractionIndex = parseInt(req.params.attractionIndex);
     if (attractionIndex < 0 || attractionIndex >= country.touristAttractions.length) {
-      return res.status(404).json({ message: 'Attraction not found' });
+      return res.status(404).json({ message: req.t('attractions.notFound') });
     }
 
     Object.assign(country.touristAttractions[attractionIndex], req.body);
     await country.save();
 
     res.json({
-      message: 'Attraction updated successfully',
+      message: req.t('attractions.updated'),
       attraction: country.touristAttractions[attractionIndex]
     });
   } catch (error) {
     console.error('Update attraction error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('attractions.serverError') });
   }
 });
 
@@ -130,21 +134,21 @@ router.delete('/country/:countryId/attraction/:attractionIndex', auth, async (re
   try {
     const country = await Country.findById(req.params.countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('attractions.countryNotFound') });
     }
 
     const attractionIndex = parseInt(req.params.attractionIndex);
     if (attractionIndex < 0 || attractionIndex >= country.touristAttractions.length) {
-      return res.status(404).json({ message: 'Attraction not found' });
+      return res.status(404).json({ message: req.t('attractions.notFound') });
     }
 
     country.touristAttractions.splice(attractionIndex, 1);
     await country.save();
 
-    res.json({ message: 'Attraction deleted successfully' });
+    res.json({ message: req.t('attractions.deleted') });
   } catch (error) {
     console.error('Delete attraction error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('attractions.serverError') });
   }
 });
 
@@ -152,17 +156,17 @@ router.delete('/country/:countryId/attraction/:attractionIndex', auth, async (re
 router.post('/country/:countryId/attraction/:attractionIndex/image', auth, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No image uploaded' });
+      return res.status(400).json({ message: req.t('attractions.noImage') });
     }
 
     const country = await Country.findById(req.params.countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('attractions.countryNotFound') });
     }
 
     const attractionIndex = parseInt(req.params.attractionIndex);
     if (attractionIndex < 0 || attractionIndex >= country.touristAttractions.length) {
-      return res.status(404).json({ message: 'Attraction not found' });
+      return res.status(404).json({ message: req.t('attractions.notFound') });
     }
 
     const attraction = country.touristAttractions[attractionIndex];
@@ -181,7 +185,7 @@ router.post('/country/:countryId/attraction/:attractionIndex/image', auth, uploa
       async (error, result) => {
         if (error) {
           console.error('Cloudinary upload error:', error);
-          return res.status(500).json({ message: 'Image upload failed' });
+          return res.status(500).json({ message: req.t('attractions.imageUploadFailed') });
         }
 
         try {
@@ -199,7 +203,7 @@ router.post('/country/:countryId/attraction/:attractionIndex/image', auth, uploa
           await country.save();
 
           res.status(201).json({
-            message: 'Image added successfully',
+            message: req.t('attractions.imageAdded'),
             image: {
               url: result.secure_url,
               caption: caption || ''
@@ -207,7 +211,7 @@ router.post('/country/:countryId/attraction/:attractionIndex/image', auth, uploa
           });
         } catch (error) {
           console.error('Save image error:', error);
-          res.status(500).json({ message: 'Server error' });
+          res.status(500).json({ message: req.t('attractions.serverError') });
         }
       }
     );
@@ -215,7 +219,7 @@ router.post('/country/:countryId/attraction/:attractionIndex/image', auth, uploa
     require('stream').Readable.from(req.file.buffer).pipe(result);
   } catch (error) {
     console.error('Add image error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('attractions.serverError') });
   }
 });
 

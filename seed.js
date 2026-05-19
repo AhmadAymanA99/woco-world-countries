@@ -16601,5 +16601,9 @@ const seedDatabase = async () => {
   }
 };
 
-// Run the seeder
-seedDatabase();
+module.exports = { allCountries };
+
+// Run the seeder only if executed directly
+if (require.main === module) {
+  seedDatabase();
+}

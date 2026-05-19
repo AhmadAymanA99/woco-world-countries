@@ -1,0 +1,104 @@
+{
+  "auth": {
+    "registerSuccess": "تم تسجيل المستخدم بنجاح",
+    "emailOrUsernameExists": "المستخدم بهذا البريد الإلكتروني أو اسم المستخدم موجود بالفعل",
+    "serverErrorRegistration": "خطأ في الخادم أثناء التسجيل",
+    "invalidCredentials": "بيانات الدخول غير صحيحة",
+    "loginSuccess": "تم تسجيل الدخول بنجاح",
+    "serverErrorLogin": "خطأ في الخادم أثناء تسجيل الدخول",
+    "serverError": "خطأ في الخادم",
+    "usernameTaken": "اسم المستخدم مستخدم بالفعل",
+    "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
+    "serverErrorDeletion": "خطأ في الخادم أثناء حذف الحساب",
+    "accountDeleted": "تم حذف الحساب وجميع البيانات المرتبطة بنجاح"
+  },
+  "countries": {
+    "serverError": "خطأ في الخادم",
+    "notFound": "الدولة غير موجودة",
+    "compareIdsRequired": "الرجاء تقديم 2-4 معرفات دول",
+    "someCountriesNotFound": "بعض الدول غير موجودة"
+  },
+  "users": {
+    "serverError": "خطأ في الخادم",
+    "countryNotFound": "الدولة غير موجودة",
+    "visitedAdded": "تمت إضافة الدولة إلى قائمة الزيارة",
+    "visitUpdated": "تم تحديث سجل الزيارة",
+    "visitNotFound": "سجل الزيارة غير موجود",
+    "visitedRemoved": "تمت إزالة الدولة من قائمة الزيارة",
+    "noPhoto": "لم يتم رفع صورة",
+    "maxPhotos": "الحد الأقصى 10 صور لكل دولة",
+    "photoUploadFailed": "فشل رفع الصورة",
+    "photoUploaded": "تم رفع الصورة بنجاح",
+    "invalidPhotoIndex": "فهرس الصورة غير صالح",
+    "photoNotFound": "الصورة غير موجودة",
+    "photoDeleted": "تم حذف الصورة بنجاح",
+    "wishlistExists": "الدولة موجودة بالفعل في قائمة الرغبات",
+    "wishlistAdded": "تمت إضافة الدولة إلى قائمة الرغبات",
+    "wishlistRemoved": "تمت إزالة الدولة من قائمة الرغبات"
+  },
+  "stories": {
+    "serverError": "خطأ في الخادم",
+    "notFound": "القصة غير موجودة",
+    "notAuthorized": "غير مصرح",
+    "deleted": "تم حذف القصة",
+    "countryNotFound": "الدولة غير موجودة",
+    "commentNotFound": "التعليق غير موجود",
+    "commentDeleted": "تم حذف التعليق"
+  },
+  "trips": {
+    "serverError": "خطأ في الخادم",
+    "notFound": "الرحلة غير موجودة",
+    "deleted": "تم حذف الرحلة",
+    "countryNotFound": "الدولة غير موجودة"
+  },
+  "collections": {
+    "serverError": "خطأ في الخادم",
+    "notFound": "المجموعة غير موجودة",
+    "notAuthorized": "غير مصرح",
+    "deleted": "تم حذف المجموعة",
+    "countryNotFound": "الدولة غير موجودة"
+  },
+  "social": {
+    "userNotFound": "المستخدم غير موجود",
+    "serverError": "خطأ في الخادم",
+    "cannotFollowSelf": "لا يمكن متابعة نفسك"
+  },
+  "analytics": {
+    "serverError": "خطأ في الخادم"
+  },
+  "attractions": {
+    "countryNotFound": "الدولة غير موجودة",
+    "serverError": "خطأ في الخادم",
+    "notFound": "المعلم غير موجود",
+    "added": "تمت إضافة المعلم بنجاح",
+    "updated": "تم تحديث المعلم بنجاح",
+    "deleted": "تم حذف المعلم بنجاح",
+    "noImage": "لم يتم رفع صورة",
+    "imageUploadFailed": "فشل رفع الصورة",
+    "imageAdded": "تمت إضافة الصورة بنجاح"
+  },
+  "middleware": {
+    "noToken": "لا يوجد رمز، تم رفض التفويض",
+    "tokenInvalid": "الرمز غير صالح"
+  },
+  "validation": {
+    "countryIdRequired": "معرف الدولة مطلوب",
+    "visitDateRequired": "تاريخ الزيارة مطلوب",
+    "durationMustBeNumber": "يجب أن تكون المدة رقمًا",
+    "ratingBetween1And5": "يجب أن يكون التقييم بين 1 و 5",
+    "validEmail": "الرجاء إدخال بريد إلكتروني صالح",
+    "passwordMinLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "firstNameRequired": "الاسم الأول مطلوب",
+    "lastNameRequired": "اسم العائلة مطلوب",
+    "usernameMinLength": "يجب أن يتكون اسم المستخدم من 3 أحرف على الأقل",
+    "firstNameNotEmpty": "لا يمكن أن يكون الاسم الأول فارغاً",
+    "lastNameNotEmpty": "لا يمكن أن يكون اسم العائلة فارغاً",
+    "imageFilesOnly": "يُسمح فقط بملفات الصور"
+  },
+  "server": {
+    "apiRunning": "ووكو API قيد التشغيل!",
+    "somethingWentWrong": "حدث خطأ ما!",
+    "routeNotFound": "المسار غير موجود"
+  }
+}

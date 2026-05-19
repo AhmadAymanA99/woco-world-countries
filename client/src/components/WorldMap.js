@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Fix for default marker icons in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -14,6 +16,7 @@ L.Icon.Default.mergeOptions({
 
 // Component to fetch and display country boundaries
 const CountryBoundaries = ({ visitedCountryCodes, visitedCountries }) => {
+  const { t } = useTranslation();
   const [countryGeoJson, setCountryGeoJson] = React.useState(null);
 
   useEffect(() => {
@@ -140,7 +143,7 @@ const CountryBoundaries = ({ visitedCountryCodes, visitedCountries }) => {
           </div>
           ${visitedCountry.visitDate ? `
             <div style="font-size: 12px; color: #6b7280;">
-              Visited: ${new Date(visitedCountry.visitDate).toLocaleDateString()}
+              ${t('worldMap.visitedLabel')}${new Date(visitedCountry.visitDate).toLocaleDateString()}
             </div>
           ` : ''}
         </div>
@@ -186,6 +189,8 @@ const CountryBoundaries = ({ visitedCountryCodes, visitedCountries }) => {
 };
 
 const WorldMap = ({ visitedCountries = [], height = '600px' }) => {
+  const { t } = useTranslation();
+  const { theme } = useTheme();
   const hasData = visitedCountries && visitedCountries.length > 0;
 
   // Get country codes for visited countries (ensure uppercase for matching)
@@ -215,7 +220,7 @@ const WorldMap = ({ visitedCountries = [], height = '600px' }) => {
     return (
       <div className="card text-center" style={{ height }}>
         <div className="py-12">
-          <p className="text-gray-600">No visited countries to display on map</p>
+          <p className="text-gray-600 dark:text-gray-400">{t('worldMap.noVisitedOnMap')}</p>
         </div>
       </div>
     );
@@ -234,7 +239,7 @@ const WorldMap = ({ visitedCountries = [], height = '600px' }) => {
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url={theme === 'dark' ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
         />
         
         {/* Country boundaries layer */}
@@ -275,13 +280,13 @@ const WorldMap = ({ visitedCountries = [], height = '600px' }) => {
                     />
                     <Link 
                       to={`/countries/${visit.country._id}`}
-                      className="font-semibold text-primary-600 hover:underline"
+                      className="font-semibold text-primary-600 dark:text-primary-400 hover:underline"
                     >
                       {visit.country.name}
                     </Link>
                     {visit.visitDate && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Visited: {new Date(visit.visitDate).toLocaleDateString()}
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {t('worldMap.visitedLabel')}{new Date(visit.visitDate).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -292,14 +297,14 @@ const WorldMap = ({ visitedCountries = [], height = '600px' }) => {
       </MapContainer>
       
       {/* Legend */}
-      <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 bg-white px-3 py-2 rounded-lg shadow-lg text-xs sm:text-sm z-10">
+      <div className="absolute bottom-2 end-2 sm:bottom-4 sm:end-4 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-lg dark:shadow-gray-900/50 text-xs sm:text-sm z-10">
         <div className="flex items-center mb-1.5">
-          <div className="w-4 h-3 sm:w-5 sm:h-3 bg-[#10b981] mr-2 rounded-sm"></div>
-          <span className="whitespace-nowrap">Visited</span>
+          <div className="w-4 h-3 sm:w-5 sm:h-3 bg-[#10b981] me-2 rounded-sm"></div>
+          <span className="whitespace-nowrap">{t('worldMap.visited')}</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-3 sm:w-5 sm:h-3 bg-[#e5e7eb] mr-2 rounded-sm"></div>
-          <span className="whitespace-nowrap">Not Visited</span>
+          <div className="w-4 h-3 sm:w-5 sm:h-3 bg-[#e5e7eb] me-2 rounded-sm"></div>
+          <span className="whitespace-nowrap">{t('worldMap.notVisited')}</span>
         </div>
       </div>
     </div>
@@ -307,4 +312,3 @@ const WorldMap = ({ visitedCountries = [], height = '600px' }) => {
 };
 
 export default WorldMap;
-

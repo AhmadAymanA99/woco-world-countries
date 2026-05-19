@@ -1,12 +1,16 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { analyticsAPI, usersAPI } from '../utils/api';
 import { Globe, Camera, Star, Calendar, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import WorldMap from '../components/WorldMap';
+import Skeleton from '../components/Skeleton';
+import { fmtNum, localizeName, localizeContinent, formatDateShort } from '../utils/format';
 import toast from 'react-hot-toast';
 
 const Analytics = () => {
+  const { t } = useTranslation();
   const { data: statsData, isLoading } = useQuery('analytics', analyticsAPI.getStats);
   const { data: visitedData } = useQuery('visited-countries', usersAPI.getVisitedCountries);
 
@@ -22,16 +26,16 @@ const Analytics = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      toast.success('Data exported successfully!');
+      toast.success(t('analytics.dataExported'));
     } catch (error) {
-      toast.error('Failed to export data');
+      toast.error(t('analytics.exportError'));
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="flex justify-center items-center min-h-96 dark:bg-gray-700">
+        <Skeleton variant="avatar" className="!h-32 !w-32" />
       </div>
     );
   }
@@ -48,12 +52,12 @@ const Analytics = () => {
   }));
 
   const ratingData = Object.entries(ratingDistribution).map(([name, value]) => ({
-    name: `${name} stars`,
+    name: t('analytics.starsLabel', { name }),
     value
   })).filter(item => item.value > 0);
 
   const timelineData = (stats.timeline || []).map(item => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    date: formatDateShort(item.date),
     countries: 1
   }));
 
@@ -63,14 +67,14 @@ const Analytics = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Travel Analytics</h1>
-          <p className="text-gray-600 max-w-2xl">
-            Comprehensive insights into your travel journey, statistics, and achievements.
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t('analytics.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
+            {t('analytics.description')}
           </p>
         </div>
-        <button onClick={handleExport} className="btn-outline flex items-center space-x-2">
+        <button onClick={handleExport} className="btn-outline flex items-center gap-2">
           <Download className="h-4 w-4" />
-          <span>Export Data</span>
+          <span>{t('analytics.exportData')}</span>
         </button>
       </div>
 
@@ -78,49 +82,49 @@ const Analytics = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="card text-center">
           <div className="flex justify-center mb-3">
-            <div className="p-3 bg-primary-100 rounded-full">
-              <Globe className="h-6 w-6 text-primary-600" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full">
+              <Globe className="h-6 w-6 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{overview.totalCountries || 0}</div>
-          <div className="text-gray-600">Countries Visited</div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{overview.totalCountries || 0}</div>
+          <div className="text-gray-600 dark:text-gray-400">{t('analytics.countriesVisited')}</div>
         </div>
 
         <div className="card text-center">
           <div className="flex justify-center mb-3">
-            <div className="p-3 bg-green-100 rounded-full">
-              <Camera className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+              <Camera className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{overview.totalPhotos || 0}</div>
-          <div className="text-gray-600">Photos Uploaded</div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{overview.totalPhotos || 0}</div>
+          <div className="text-gray-600 dark:text-gray-400">{t('analytics.photosUploaded')}</div>
         </div>
 
         <div className="card text-center">
           <div className="flex justify-center mb-3">
-            <div className="p-3 bg-yellow-100 rounded-full">
-              <Star className="h-6 w-6 text-yellow-600" />
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
+              <Star className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{overview.averageRating || '0.0'}</div>
-          <div className="text-gray-600">Average Rating</div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{overview.averageRating || '0.0'}</div>
+          <div className="text-gray-600 dark:text-gray-400">{t('analytics.averageRating')}</div>
         </div>
 
         <div className="card text-center">
           <div className="flex justify-center mb-3">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Calendar className="h-6 w-6 text-blue-600" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{overview.totalDays || 0}</div>
-          <div className="text-gray-600">Total Days Traveled</div>
+          <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{overview.totalDays || 0}</div>
+          <div className="text-gray-600 dark:text-gray-400">{t('analytics.totalDays')}</div>
         </div>
       </div>
 
       {/* World Map */}
       {stats.mapData && stats.mapData.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Travel Map</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t('analytics.travelMap')}</h2>
           <WorldMap visitedCountries={visitedData?.data || []} height="500px" />
         </div>
       )}
@@ -130,7 +134,7 @@ const Analytics = () => {
         {/* Countries by Continent */}
         {continentData.length > 0 && (
           <div className="card">
-            <h2 className="text-xl font-semibold mb-4">Countries by Continent</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('analytics.byContinent')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -138,7 +142,7 @@ const Analytics = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${localizeContinent(name)}: ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -156,7 +160,7 @@ const Analytics = () => {
         {/* Rating Distribution */}
         {ratingData.length > 0 && (
           <div className="card">
-            <h2 className="text-xl font-semibold mb-4">Rating Distribution</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('analytics.ratingDistribution')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={ratingData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -173,12 +177,12 @@ const Analytics = () => {
       {/* Top Cities */}
       {stats.topCities && stats.topCities.length > 0 && (
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Most Visited Cities</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('analytics.mostVisitedCities')}</h2>
           <div className="grid md:grid-cols-5 gap-4">
             {stats.topCities.map((item, index) => (
-              <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900 mb-1">{item.count}</div>
-                <div className="text-sm text-gray-600">{item.city}</div>
+              <div key={index} className="text-center p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{item.count}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{item.city}</div>
               </div>
             ))}
           </div>
@@ -188,7 +192,7 @@ const Analytics = () => {
       {/* Timeline Chart */}
       {timelineData.length > 0 && (
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Travel Timeline</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('analytics.timeline')}</h2>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={timelineData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -205,4 +209,3 @@ const Analytics = () => {
 };
 
 export default Analytics;
-

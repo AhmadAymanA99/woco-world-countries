@@ -6,6 +6,7 @@ const Story = require('../models/Story');
 const User = require('../models/User');
 const Country = require('../models/Country');
 const auth = require('../middleware/auth');
+const { localizeCountry } = require('../utils/localizeCountry');
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ const upload = multer({
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error(req.t('validation.imageFilesOnly')), false);
     }
   }
 });
@@ -38,32 +39,45 @@ router.get('/', async (req, res) => {
     if (country) query.country = country;
     if (author) query.author = author;
 
-    const stories = await Story.find(query)
-      .populate('author', 'username firstName lastName avatar')
-      .populate('country', 'name code flag')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+     const stories = await Story.find(query)
+       .populate('author', 'username firstName lastName avatar')
+       .populate('country', 'name code flag')
+       .sort({ createdAt: -1 })
+       .skip(skip)
+       .limit(parseInt(limit));
+     
+     // Localize country data for each story
+     const localizedStories = stories.map(story => {
+       if (story.country) {
+         story.country = localizeCountry(story.country.toObject ? story.country.toObject() : story.country, req.language);
+       }
+       return story;
+     });
 
-    const total = await Story.countDocuments(query);
-
-    res.json({ stories, total, page: parseInt(page), limit: parseInt(limit) });
+     const total = await Story.countDocuments(query);
+ 
+     res.json({ stories: localizedStories, total, page: parseInt(page), limit: parseInt(limit) });
   } catch (error) {
     console.error('Get stories error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
 // Get single story
 router.get('/:id', async (req, res) => {
   try {
-    const story = await Story.findById(req.params.id)
-      .populate('author', 'username firstName lastName avatar bio')
-      .populate('country', 'name code flag continent')
-      .populate('comments.user', 'username firstName lastName avatar');
+     const story = await Story.findById(req.params.id)
+       .populate('author', 'username firstName lastName avatar bio')
+       .populate('country', 'name code flag continent')
+       .populate('comments.user', 'username firstName lastName avatar');
+       
+     // Localize country data
+     if (story.country) {
+       story.country = localizeCountry(story.country.toObject ? story.country.toObject() : story.country, req.language);
+     }
 
     if (!story) {
-      return res.status(404).json({ message: 'Story not found' });
+      return res.status(404).json({ message: req.t('stories.notFound') });
     }
 
     // Increment views
@@ -73,7 +87,7 @@ router.get('/:id', async (req, res) => {
     res.json(story);
   } catch (error) {
     console.error('Get story error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
@@ -93,7 +107,7 @@ router.post('/', auth, [
 
     const country = await Country.findById(countryId);
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('stories.countryNotFound') });
     }
 
     const story = new Story({
@@ -113,7 +127,7 @@ router.post('/', auth, [
     res.status(201).json(story);
   } catch (error) {
     console.error('Create story error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
@@ -122,11 +136,11 @@ router.put('/:id', auth, async (req, res) => {
   try {
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ message: 'Story not found' });
+      return res.status(404).json({ message: req.t('stories.notFound') });
     }
 
     if (story.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('stories.notAuthorized') });
     }
 
     Object.assign(story, req.body);
@@ -138,7 +152,7 @@ router.put('/:id', auth, async (req, res) => {
     res.json(story);
   } catch (error) {
     console.error('Update story error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
@@ -147,18 +161,18 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ message: 'Story not found' });
+      return res.status(404).json({ message: req.t('stories.notFound') });
     }
 
     if (story.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('stories.notAuthorized') });
     }
 
     await story.deleteOne();
-    res.json({ message: 'Story deleted' });
+    res.json({ message: req.t('stories.deleted') });
   } catch (error) {
     console.error('Delete story error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
@@ -167,7 +181,7 @@ router.post('/:id/like', auth, async (req, res) => {
   try {
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ message: 'Story not found' });
+      return res.status(404).json({ message: req.t('stories.notFound') });
     }
 
     const likeIndex = story.likes.findIndex(
@@ -184,7 +198,7 @@ router.post('/:id/like', auth, async (req, res) => {
     res.json({ liked: likeIndex === -1, likesCount: story.likes.length });
   } catch (error) {
     console.error('Like story error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
@@ -200,7 +214,7 @@ router.post('/:id/comments', auth, [
 
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ message: 'Story not found' });
+      return res.status(404).json({ message: req.t('stories.notFound') });
     }
 
     story.comments.push({
@@ -214,7 +228,7 @@ router.post('/:id/comments', auth, [
     res.status(201).json(story.comments[story.comments.length - 1]);
   } catch (error) {
     console.error('Add comment error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 
@@ -223,25 +237,25 @@ router.delete('/:id/comments/:commentId', auth, async (req, res) => {
   try {
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ message: 'Story not found' });
+      return res.status(404).json({ message: req.t('stories.notFound') });
     }
 
     const comment = story.comments.id(req.params.commentId);
     if (!comment) {
-      return res.status(404).json({ message: 'Comment not found' });
+      return res.status(404).json({ message: req.t('stories.commentNotFound') });
     }
 
     if (comment.user.toString() !== req.user._id.toString() && 
         story.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: req.t('stories.notAuthorized') });
     }
 
     comment.deleteOne();
     await story.save();
-    res.json({ message: 'Comment deleted' });
+    res.json({ message: req.t('stories.commentDeleted') });
   } catch (error) {
     console.error('Delete comment error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('stories.serverError') });
   }
 });
 

@@ -1,4 +1,11 @@
 import axios from 'axios';
+import i18n from '../i18n/config';
+import { updateNetworkStatus } from './networkStatus';
+
+axios.defaults.headers.common['Accept-Language'] = i18n.language;
+i18n.on('languageChanged', (lng) => {
+  axios.defaults.headers.common['Accept-Language'] = lng;
+});
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -122,5 +129,21 @@ export const attractionsAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
 };
+
+// Track backend health via axios interceptors
+axios.interceptors.response.use(
+  (response) => {
+    updateNetworkStatus({ isBackendOnline: true });
+    return response;
+  },
+  (error) => {
+    if (!error.response) {
+      updateNetworkStatus({ isBackendOnline: false });
+    } else {
+      updateNetworkStatus({ isBackendOnline: true });
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default axios;

@@ -13,11 +13,11 @@ const router = express.Router();
 
 // Register
 router.post('/register', [
-  body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-  body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('firstName').notEmpty().withMessage('First name is required'),
-  body('lastName').notEmpty().withMessage('Last name is required')
+  body('username').isLength({ min: 3 }).withMessage((value, { req }) => req.t('validation.usernameMinLength')),
+  body('email').isEmail().withMessage((value, { req }) => req.t('validation.validEmail')),
+  body('password').isLength({ min: 6 }).withMessage((value, { req }) => req.t('validation.passwordMinLength')),
+  body('firstName').notEmpty().withMessage((value, { req }) => req.t('validation.firstNameRequired')),
+  body('lastName').notEmpty().withMessage((value, { req }) => req.t('validation.lastNameRequired'))
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -34,7 +34,7 @@ router.post('/register', [
 
     if (existingUser) {
       return res.status(400).json({ 
-        message: 'User with this email or username already exists' 
+        message: req.t('auth.emailOrUsernameExists') 
       });
     }
 
@@ -63,7 +63,7 @@ router.post('/register', [
     });
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: req.t('auth.registerSuccess'),
       token,
       user: {
         id: user._id,
@@ -76,14 +76,14 @@ router.post('/register', [
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+    res.status(500).json({ message: req.t('auth.serverErrorRegistration') });
   }
 });
 
 // Login
 router.post('/login', [
-  body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').notEmpty().withMessage('Password is required')
+  body('email').isEmail().withMessage((value, { req }) => req.t('validation.validEmail')),
+  body('password').notEmpty().withMessage((value, { req }) => req.t('validation.passwordRequired'))
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -96,13 +96,13 @@ router.post('/login', [
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: req.t('auth.invalidCredentials') });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: req.t('auth.invalidCredentials') });
     }
 
     // Update last login
@@ -119,7 +119,7 @@ router.post('/login', [
     });
 
     res.json({
-      message: 'Login successful',
+      message: req.t('auth.loginSuccess'),
       token,
       user: {
         id: user._id,
@@ -133,7 +133,7 @@ router.post('/login', [
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error during login' });
+    res.status(500).json({ message: req.t('auth.serverErrorLogin') });
   }
 });
 
@@ -148,15 +148,15 @@ router.get('/me', auth, async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error('Get user error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('auth.serverError') });
   }
 });
 
 // Update profile
 router.put('/profile', auth, [
-  body('firstName').optional().notEmpty().withMessage('First name cannot be empty'),
-  body('lastName').optional().notEmpty().withMessage('Last name cannot be empty'),
-  body('username').optional().isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
+  body('firstName').optional().notEmpty().withMessage((value, { req }) => req.t('validation.firstNameNotEmpty')),
+  body('lastName').optional().notEmpty().withMessage((value, { req }) => req.t('validation.lastNameNotEmpty')),
+  body('username').optional().isLength({ min: 3 }).withMessage((value, { req }) => req.t('validation.usernameMinLength'))
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -176,7 +176,7 @@ router.put('/profile', auth, [
         _id: { $ne: req.user._id } 
       });
       if (existingUser) {
-        return res.status(400).json({ message: 'Username already taken' });
+        return res.status(400).json({ message: req.t('auth.usernameTaken') });
       }
       updateData.username = username;
     }
@@ -189,12 +189,12 @@ router.put('/profile', auth, [
     ).select('-password');
 
     res.json({
-      message: 'Profile updated successfully',
+      message: req.t('auth.profileUpdated'),
       user
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('auth.serverError') });
   }
 });
 
@@ -246,11 +246,11 @@ router.delete('/account', auth, async (req, res) => {
     await User.findByIdAndDelete(userId);
 
     res.json({
-      message: 'Account and all associated data deleted successfully'
+      message: req.t('auth.accountDeleted')
     });
   } catch (error) {
     console.error('Delete account error:', error);
-    res.status(500).json({ message: 'Server error during account deletion' });
+    res.status(500).json({ message: req.t('auth.serverErrorDeletion') });
   }
 });
 

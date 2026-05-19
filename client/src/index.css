@@ -7,30 +7,34 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
   
+  html[dir="rtl"] {
+    font-family: 'Cairo', system-ui, sans-serif;
+  }
+  
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
   }
   
   .btn-outline {
-    @apply border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6;
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white dark:placeholder-gray-400;
   }
   
   .gradient-bg {
@@ -45,19 +49,19 @@
   }
 
   .prose {
-    @apply text-gray-700 leading-relaxed;
+    @apply text-gray-700 dark:text-gray-300 leading-relaxed;
   }
 
   .prose h1 {
-    @apply text-3xl font-bold text-gray-900 mt-8 mb-4;
+    @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4;
   }
 
   .prose h2 {
-    @apply text-2xl font-bold text-gray-900 mt-6 mb-3;
+    @apply text-2xl font-bold text-gray-900 dark:text-gray-100 mt-6 mb-3;
   }
 
   .prose h3 {
-    @apply text-xl font-semibold text-gray-900 mt-4 mb-2;
+    @apply text-xl font-semibold text-gray-900 dark:text-gray-100 mt-4 mb-2;
   }
 
   .prose p {
@@ -69,19 +73,27 @@
   }
 
   .prose a {
-    @apply text-primary-600 hover:underline;
+    @apply text-primary-600 dark:text-primary-400 hover:underline;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-primary-500 dark:border-primary-400 pl-4 italic my-4;
+  }
+  
+  .prose pre {
+    @apply bg-gray-100 dark:bg-gray-700 rounded-lg p-4 overflow-x-auto;
+  }
+  
+  .prose code {
+    @apply bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-sm;
   }
 
   .prose ul, .prose ol {
-    @apply mb-4 ml-6;
+    @apply mb-4 ltr:ml-6 rtl:mr-6;
   }
 
   .prose li {
     @apply mb-2;
-  }
-
-  .prose blockquote {
-    @apply border-l-4 border-primary-500 pl-4 italic my-4;
   }
 }
 
@@ -107,4 +119,66 @@
 [style*="z-index: 9999"],
 [style*="z-index: 10000"] {
   position: fixed !important;
+}
+
+/* React-Quill dark mode overrides */
+.dark .ql-toolbar {
+  @apply bg-gray-800 border-gray-600 rounded-t-lg;
+}
+
+.dark .ql-container {
+  @apply border-gray-600 rounded-b-lg;
+}
+
+.dark .ql-editor {
+  @apply text-gray-100 bg-gray-800 min-h-[350px];
+}
+
+.dark .ql-editor.ql-blank::before {
+  @apply text-gray-500;
+}
+
+.dark .ql-stroke {
+  stroke: #d1d5db;
+}
+
+.dark .ql-fill {
+  fill: #d1d5db;
+}
+
+.dark .ql-picker-label {
+  @apply text-gray-300;
+}
+
+.dark .ql-picker-options {
+  @apply bg-gray-800 border-gray-600;
+}
+
+.dark .ql-picker-item {
+  @apply text-gray-300;
+}
+
+.dark .ql-picker-item:hover {
+  @apply text-primary-400;
+}
+
+.dark .ql-active .ql-stroke {
+  stroke: #14b8a6;
+}
+
+.dark .ql-active .ql-fill {
+  fill: #14b8a6;
+}
+
+.dark .ql-editor a {
+  @apply text-primary-400;
+}
+
+.dark .ql-editor blockquote {
+  @apply border-s-4 border-primary-400 pl-4 italic;
+  border-left-color: #14b8a6;
+}
+
+.dark .ql-editor pre {
+  @apply bg-gray-700 text-gray-200 rounded;
 }

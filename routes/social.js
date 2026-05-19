@@ -4,6 +4,7 @@ const Follow = require('../models/Follow');
 const Story = require('../models/Story');
 const Collection = require('../models/Collection');
 const auth = require('../middleware/auth');
+const { localizeCountry } = require('../utils/localizeCountry');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.get('/profile/:username', async (req, res) => {
       .lean();
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: req.t('social.userNotFound') });
     }
 
     // Get stats
@@ -55,7 +56,7 @@ router.get('/profile/:username', async (req, res) => {
     });
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -64,11 +65,11 @@ router.post('/follow/:userId', auth, async (req, res) => {
   try {
     const targetUser = await User.findById(req.params.userId);
     if (!targetUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: req.t('social.userNotFound') });
     }
 
     if (req.params.userId === req.user._id.toString()) {
-      return res.status(400).json({ message: 'Cannot follow yourself' });
+      return res.status(400).json({ message: req.t('social.cannotFollowSelf') });
     }
 
     const existingFollow = await Follow.findOne({
@@ -90,7 +91,7 @@ router.post('/follow/:userId', auth, async (req, res) => {
     res.json({ following: true });
   } catch (error) {
     console.error('Follow user error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -105,7 +106,7 @@ router.get('/follow/:userId', auth, async (req, res) => {
     res.json({ following: !!follow });
   } catch (error) {
     console.error('Check follow error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -120,7 +121,7 @@ router.get('/followers/:userId', async (req, res) => {
     res.json(followers.map(f => f.follower));
   } catch (error) {
     console.error('Get followers error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -135,7 +136,7 @@ router.get('/following/:userId', async (req, res) => {
     res.json(following.map(f => f.following));
   } catch (error) {
     console.error('Get following error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -162,7 +163,7 @@ router.get('/leaderboard/countries', async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error('Leaderboard error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -213,7 +214,7 @@ router.get('/leaderboard/continents', async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error('Continents leaderboard error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -275,7 +276,7 @@ router.get('/recommendations/users', auth, async (req, res) => {
     res.json(similarUsers);
   } catch (error) {
     console.error('Get recommendations error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 
@@ -298,10 +299,15 @@ router.get('/recommendations/countries', auth, async (req, res) => {
       .limit(10)
       .sort({ 'population.total': -1 });
 
-    res.json(recommendations);
+    // Localize country data
+    const localizedRecommendations = recommendations.map(country => {
+      return localizeCountry(country.toObject ? country.toObject() : country, req.language);
+    });
+
+    res.json(localizedRecommendations);
   } catch (error) {
     console.error('Get country recommendations error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('social.serverError') });
   }
 });
 

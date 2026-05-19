@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { authAPI } from '../utils/api';
+import { useTranslation } from 'react-i18next';
 
 const AuthContext = createContext();
 
@@ -13,6 +14,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +35,10 @@ export const AuthProvider = ({ children }) => {
           const response = await authAPI.getMe();
           setUser(response.data);
         } catch (error) {
-          localStorage.removeItem('token');
-          authAPI.removeAuthHeader();
+          if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            authAPI.removeAuthHeader();
+          }
         }
       }
       setLoading(false);
@@ -52,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       authAPI.addAuthHeader(token);
       setUser(userData);
       
-      toast.success('Login successful!');
+      toast.success(t('auth.loginSuccess'));
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed';
@@ -70,7 +74,7 @@ export const AuthProvider = ({ children }) => {
       authAPI.addAuthHeader(token);
       setUser(newUser);
       
-      toast.success('Registration successful!');
+      toast.success(t('auth.registerSuccess'));
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
@@ -83,14 +87,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     authAPI.removeAuthHeader();
     setUser(null);
-    toast.success('Logged out successfully');
+    toast.success(t('auth.logoutSuccess'));
   };
 
   const updateProfile = async (profileData) => {
     try {
       const response = await authAPI.updateProfile(profileData);
       setUser(response.data.user);
-      toast.success('Profile updated successfully!');
+      toast.success(t('auth.profileUpdateSuccess'));
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Profile update failed';
@@ -105,7 +109,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('token');
       authAPI.removeAuthHeader();
       setUser(null);
-      toast.success('Account deleted successfully');
+      toast.success(t('auth.accountDeleteSuccess'));
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Account deletion failed';

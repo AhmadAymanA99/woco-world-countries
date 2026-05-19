@@ -1,6 +1,7 @@
 const express = require('express');
 const Country = require('../models/Country');
 const auth = require('../middleware/auth');
+const { localizeCountry, loadArabicData, capitalMap, continentMap } = require('../utils/localizeCountry');
 
 const router = express.Router();
 
@@ -38,13 +39,18 @@ router.get('/', async (req, res) => {
       .select('name code continent flag capital population.total gdp.total')
       .sort(sortOptions);
     
+    // Localize country data if language is Arabic
+    const localizedCountries = req.language === 'ar' 
+      ? countries.map(country => localizeCountry(country.toObject(), req.language))
+      : countries;
+    
     res.json({
-      countries,
+      countries: localizedCountries,
       total: countries.length
     });
   } catch (error) {
     console.error('Get countries error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('countries.serverError') });
   }
 });
 
@@ -68,13 +74,14 @@ router.get('/:identifier', async (req, res) => {
     }
     
     if (!country) {
-      return res.status(404).json({ message: 'Country not found' });
+      return res.status(404).json({ message: req.t('countries.notFound') });
     }
     
-    res.json(country);
+    const result = localizeCountry(country, req.language);
+    res.json(result);
   } catch (error) {
     console.error('Get country error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('countries.serverError') });
   }
 });
 
@@ -97,14 +104,19 @@ router.get('/continent/:continent', async (req, res) => {
       .select('name code continent flag capital population.total gdp.total')
       .sort(sortOptions);
     
+    // Localize country data if language is Arabic
+    const localizedCountries = req.language === 'ar' 
+      ? countries.map(country => localizeCountry(country.toObject(), req.language))
+      : countries;
+    
     res.json({
-      countries,
+      countries: localizedCountries,
       total: countries.length,
       continent
     });
   } catch (error) {
     console.error('Get countries by continent error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('countries.serverError') });
   }
 });
 
@@ -115,7 +127,7 @@ router.get('/meta/continents', async (req, res) => {
     res.json(continents.sort());
   } catch (error) {
     console.error('Get continents error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('countries.serverError') });
   }
 });
 
@@ -135,15 +147,20 @@ router.get('/search/:query', async (req, res) => {
     .select('name code continent flag capital population.total gdp.total')
     .limit(parseInt(limit))
     .sort({ name: 1 });
+
+    // Localize country data if language is Arabic
+    const localizedCountries = req.language === 'ar' 
+      ? countries.map(country => localizeCountry(country.toObject(), req.language))
+      : countries;
     
     res.json({
-      countries,
+      countries: localizedCountries,
       total: countries.length,
       query
     });
   } catch (error) {
     console.error('Search countries error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('countries.serverError') });
   }
 });
 
@@ -153,7 +170,7 @@ router.post('/compare', async (req, res) => {
     const { countryIds } = req.body;
     
     if (!Array.isArray(countryIds) || countryIds.length < 2 || countryIds.length > 4) {
-      return res.status(400).json({ message: 'Please provide 2-4 country IDs' });
+      return res.status(400).json({ message: req.t('countries.compareIdsRequired') });
     }
     
     const countries = await Country.find({
@@ -161,13 +178,14 @@ router.post('/compare', async (req, res) => {
     });
     
     if (countries.length !== countryIds.length) {
-      return res.status(404).json({ message: 'Some countries not found' });
+      return res.status(404).json({ message: req.t('countries.someCountriesNotFound') });
     }
     
-    res.json(countries);
+    const result = countries.map(c => localizeCountry(c, req.language));
+    res.json(result);
   } catch (error) {
     console.error('Compare countries error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: req.t('countries.serverError') });
   }
 });
 

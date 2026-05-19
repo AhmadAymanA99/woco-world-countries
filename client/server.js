@@ -100,15 +100,104 @@ app.get('/api/health', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/countries', require('./routes/countries'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/stories', require('./routes/stories'));
-app.use('/api/trips', require('./routes/trips'));
-app.use('/api/collections', require('./routes/collections'));
-app.use('/api/social', require('./routes/social'));
-app.use('/api/analytics', require('./routes/analytics'));
-app.use('/api/attractions', require('./routes/attractions'));
+if (process.env.VERCEL && !process.env.MONGODB_URI) {
+  // Vercel without Atlas — serve country data from seed JSON
+  const { allCountries } = require('./seed');
+  const { localizeCountry } = require('./utils/localizeCountry');
+
+  const pick = (obj, fields) => {
+    const result = {};
+    for (const f of fields) {
+      const parts = f.split('.');
+      let v = obj;
+      for (const p of parts) if (v) v = v[p];
+      if (v !== undefined) result[f] = v;
+    }
+    return result;
+  };
+
+  const sortCountries = (arr, sortBy, sortOrder) => {
+    const dir = sortOrder === 'desc' ? -1 : 1;
+    const arrCopy = [...arr];
+    if (sortBy === 'population') arrCopy.sort((a, b) => dir * ((a.population?.total || 0) - (b.population?.total || 0)));
+    else if (sortBy === 'gdp') arrCopy.sort((a, b) => dir * ((a.gdp?.total || 0) - (b.gdp?.total || 0)));
+    else if (sortBy === 'continent') arrCopy.sort((a, b) => dir * ((a.continent || '').localeCompare(b.continent || '')) || a.name.localeCompare(b.name));
+    else arrCopy.sort((a, b) => dir * a.name.localeCompare(b.name));
+    return arrCopy;
+  };
+
+  const router = require('express').Router();
+
+  router.get('/', (req, res) => {
+    let filtered = [...allCountries];
+    if (req.query.continent && req.query.continent !== 'all')
+      filtered = filtered.filter(c => c.continent === req.query.continent);
+    filtered = sortCountries(filtered, req.query.sortBy, req.query.sortOrder);
+    const lang = req.language;
+    const result = filtered.map(c => {
+      const picked = pick(c, ['_id', 'name', 'code', 'continent', 'flag', 'capital', 'population.total', 'gdp.total']);
+      return lang === 'ar' ? localizeCountry(picked, lang) : picked;
+    });
+    res.json({ countries: result, total: result.length });
+  });
+
+  router.get('/search/:query', (req, res) => {
+    const q = req.params.query.toLowerCase();
+    const matches = allCountries.filter(c =>
+      c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+    ).slice(0, +(req.query.limit || 20));
+    res.json(matches);
+  });
+
+  router.get('/meta/continents', (req, res) => {
+    res.json([...new Set(allCountries.map(c => c.continent).filter(Boolean))]);
+  });
+
+  router.get('/continent/:continent', (req, res) => {
+    let filtered = allCountries.filter(c => c.continent === req.params.continent);
+    filtered = sortCountries(filtered, req.query.sortBy, req.query.sortOrder);
+    const lang = req.language;
+    const result = filtered.map(c => {
+      const picked = pick(c, ['_id', 'name', 'code', 'continent', 'flag', 'capital', 'population.total', 'gdp.total']);
+      return lang === 'ar' ? localizeCountry(picked, lang) : picked;
+    });
+    res.json({ countries: result, total: result.length });
+  });
+
+  router.get('/:identifier', (req, res) => {
+    const country = allCountries.find(c => c._id.toString() === req.params.identifier || c.code === req.params.identifier);
+    if (!country) return res.status(404).json({ message: 'Country not found' });
+    const lang = req.language;
+    res.json(lang === 'ar' ? localizeCountry({ ...country }, lang) : country);
+  });
+
+  router.post('/compare', (req, res) => {
+    const ids = req.body.countryIds || [];
+    const compared = allCountries.filter(c => ids.includes(c._id.toString()));
+    res.json(compared);
+  });
+
+  app.use('/api/countries', router);
+  const dbUnavail = (req, res) => res.status(503).json({ message: 'Database not available on serverless' });
+  app.use('/api/auth', dbUnavail);
+  app.use('/api/users', dbUnavail);
+  app.use('/api/stories', dbUnavail);
+  app.use('/api/trips', dbUnavail);
+  app.use('/api/collections', dbUnavail);
+  app.use('/api/social', dbUnavail);
+  app.use('/api/analytics', dbUnavail);
+  app.use('/api/attractions', dbUnavail);
+} else {
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/countries', require('./routes/countries'));
+  app.use('/api/users', require('./routes/users'));
+  app.use('/api/stories', require('./routes/stories'));
+  app.use('/api/trips', require('./routes/trips'));
+  app.use('/api/collections', require('./routes/collections'));
+  app.use('/api/social', require('./routes/social'));
+  app.use('/api/analytics', require('./routes/analytics'));
+  app.use('/api/attractions', require('./routes/attractions'));
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -127,8 +216,14 @@ app.use('*', (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 if (process.env.VERCEL) {
-  // Vercel serverless — connect DB on module load (cached for warm lambdas)
-  connectDB().catch((err) => console.error('Initial DB connection failed:', err.message));
+  // Vercel serverless
+  if (process.env.MONGODB_URI) {
+    // Atlas configured — try connecting
+    connectDB().catch((err) => console.error('Initial DB connection failed:', err.message));
+  } else {
+    // No Atlas — country data served from seed JSON, user features disabled
+    console.log('Running on Vercel without MongoDB, using seed data');
+  }
 } else {
   // Local dev — connect DB then start listening
   connectDB().then(() => {

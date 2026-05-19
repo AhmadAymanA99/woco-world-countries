@@ -9,7 +9,7 @@ import { fmtNum, fmtAbbr, localizeName, localizeContinent } from '../utils/forma
 import ErrorDisplay from '../components/ErrorDisplay';
 
 const Home = () => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { data: continentsData, isError: continentsError, refetch: refetchContinents } = useQuery("continents", countriesAPI.getContinents);
     const { data: countriesData, isError: countriesError, refetch: refetchCountries } = useQuery("featured-countries", () => countriesAPI.getAll({ limit: 6, sortBy: "population", sortOrder: "desc" }));
 

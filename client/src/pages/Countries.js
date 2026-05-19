@@ -7,7 +7,7 @@ import { SEO } from "../components/SEO";
 import { useTranslation } from 'react-i18next';
 import Skeleton from '../components/Skeleton';
 import ErrorDisplay from '../components/ErrorDisplay';
-import { fmtNum, localizeName, localizeContinent } from '../utils/format';
+import { localizeName, localizeContinent } from '../utils/format';
 
 const Countries = () => {
     const { t, i18n } = useTranslation();

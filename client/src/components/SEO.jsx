@@ -38,11 +38,6 @@ export const SEO = ({
       element.setAttribute('content', content);
     };
 
-    const removeMetaTag = (name) => {
-      const element = document.querySelector(`meta[name="${name}"]`);
-      if (element) element.remove();
-    };
-
     const updateOGTag = (property, content) => {
       let element = document.querySelector(`meta[property="${property}"]`);
       if (!element) {

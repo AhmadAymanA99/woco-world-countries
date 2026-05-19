@@ -6,7 +6,7 @@ import { Globe, Camera, Star, Calendar, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import WorldMap from '../components/WorldMap';
 import Skeleton from '../components/Skeleton';
-import { fmtNum, localizeName, localizeContinent, formatDateShort } from '../utils/format';
+import { localizeContinent, formatDateShort } from '../utils/format';
 import toast from 'react-hot-toast';
 
 const Analytics = () => {

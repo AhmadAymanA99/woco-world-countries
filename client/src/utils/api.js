@@ -7,12 +7,11 @@ i18n.on('languageChanged', (lng) => {
   axios.defaults.headers.common['Accept-Language'] = lng;
 });
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
-// Ensure API_BASE_URL ends with /api
 const getApiUrl = (endpoint) => {
-  // Remove trailing slash and ensure it ends with /api
-  let baseUrl = API_BASE_URL.replace(/\/$/, ''); // Remove trailing slash
+  if (!API_BASE_URL) return `/api${endpoint}`;
+  let baseUrl = API_BASE_URL.replace(/\/$/, '');
   if (!baseUrl.endsWith('/api')) {
     baseUrl = `${baseUrl}/api`;
   }

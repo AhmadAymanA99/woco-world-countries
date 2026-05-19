@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 require('dotenv').config({ path: './config.env' });
 
 const app = express();
@@ -37,7 +36,7 @@ const i18next = require('./config/i18n');
 const i18nextMiddleware = require('i18next-http-middleware');
 app.use(i18nextMiddleware.handle(i18next));
 
-// MongoDB connection with in-memory fallback
+// MongoDB connection with in-memory fallback (local dev only)
 async function connectDB() {
   let isInMemory = false;
   try {
@@ -48,9 +47,14 @@ async function connectDB() {
     });
     console.log('MongoDB connected successfully (Atlas)');
   } catch (err) {
+    if (process.env.VERCEL) {
+      console.error('MongoDB connection failed on Vercel:', err.message);
+      throw err;
+    }
     console.warn('Atlas connection failed, starting in-memory MongoDB...');
     isInMemory = true;
     try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
       const mongod = await MongoMemoryServer.create({
         instance: { dbName: 'woco' },
       });
@@ -119,11 +123,16 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Wait for DB connection before starting server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+if (process.env.VERCEL) {
+  // Vercel serverless — connect DB on module load (cached for warm lambdas)
+  connectDB().catch((err) => console.error('Initial DB connection failed:', err.message));
+} else {
+  // Local dev — connect DB then start listening
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   });
-});
+}
 
 module.exports = app;

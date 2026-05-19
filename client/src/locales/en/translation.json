@@ -79,6 +79,7 @@
   "countryDetail.peoplePerKm": "people/km²",
 
   "compare.title": "Compare Countries",
+  "compare.description": "Select countries to compare their statistics side by side",
   "compare.selectCountries": "Select up to 4 countries to compare",
   "compare.searchCountry": "Search and add a country...",
   "compare.loading": "Loading comparison...",

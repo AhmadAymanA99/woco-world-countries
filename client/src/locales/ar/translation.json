@@ -81,6 +81,7 @@
   "countryDetail.peoplePerKm": "شخص/كم²",
 
   "compare.title": "مقارنة الدول",
+  "compare.description": "اختر الدول لمقارنة إحصائياتها جنباً إلى جنب",
   "compare.selectCountries": "اختر حتى 4 دول للمقارنة",
   "compare.searchCountry": "ابحث وأضف دولة...",
   "compare.loading": "جاري تحميل المقارنة...",

@@ -8,7 +8,7 @@ $backendLog = "$logDir\backend.log"
 $frontendLog = "$logDir\frontend.log"
 
 # Start backend
-$backend = Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c", "node server.js > `"$backendLog`" 2>&1" -WorkingDirectory "D:\new\woco" -PassThru
+$backend = Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c", "node client/server.js > `"$backendLog`" 2>&1" -WorkingDirectory "D:\new\woco" -PassThru
 
 Start-Sleep -Seconds 5
 

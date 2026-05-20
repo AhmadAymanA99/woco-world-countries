@@ -75,6 +75,7 @@ app.get('/api/health', (req, res) => {
 const useSeedFallback = process.env.VERCEL ? !process.env.MONGODB_URI : false;
 let dbReady = false;
 let dbError = null;
+let dbConnectionPromise = null;
 
 async function connectDB() {
   try {
@@ -123,6 +124,19 @@ async function connectDB() {
     }
   }
 }
+
+// Middleware to wait for DB connection on non-seed routes
+app.use(async (req, res, next) => {
+  if (useSeedFallback) return next();
+  if (dbReady) return next();
+  try {
+    if (!dbConnectionPromise) dbConnectionPromise = connectDB();
+    await dbConnectionPromise;
+  } catch (e) {
+    dbError = e.message;
+  }
+  next();
+});
 
 // ——— ROUTES ———
 if (useSeedFallback) {
@@ -251,7 +265,7 @@ const PORT = process.env.PORT || 5000;
 
 if (process.env.VERCEL) {
   if (process.env.MONGODB_URI) {
-    connectDB();
+    dbConnectionPromise = connectDB();
   } else {
     console.log('Running on Vercel without MongoDB, using seed data');
   }

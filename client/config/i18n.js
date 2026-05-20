@@ -3,7 +3,7 @@ const Backend = require('i18next-fs-backend');
 const middleware = require('i18next-http-middleware');
 const path = require('path');
 
-i18next
+const initPromise = i18next
   .use(Backend)
   .use(middleware.LanguageDetector)
   .init({
@@ -20,4 +20,7 @@ i18next
     },
   });
 
+initPromise.catch(err => console.error('i18n async init failed:', err.message));
+
 module.exports = i18next;
+module.exports.initPromise = initPromise;

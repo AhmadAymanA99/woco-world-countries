@@ -1,3 +1,8 @@
+// Prevent Node 18+ from crashing on unhandled rejections (e.g. i18n async init)
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection (caught):', reason);
+});
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -40,6 +45,7 @@ if (!process.env.VERCEL) app.use(limiter);
 let i18next;
 try {
   i18next = require('./config/i18n');
+  if (i18next.initPromise) i18next.initPromise.catch(() => {});
   const i18nextMiddleware = require('i18next-http-middleware');
   app.use(i18nextMiddleware.handle(i18next));
 } catch (err) {

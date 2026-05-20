@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config({ path: '../config.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '..', 'config.env') });
 
 const app = express();
 
@@ -41,7 +41,6 @@ app.use(i18nextMiddleware.handle(i18next));
 
 // MongoDB connection with in-memory fallback (local dev only)
 async function connectDB() {
-  let isInMemory = false;
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
@@ -55,7 +54,6 @@ async function connectDB() {
       throw err;
     }
     console.warn('Atlas connection failed, starting in-memory MongoDB...');
-    isInMemory = true;
     try {
       const { MongoMemoryServer } = require('mongodb-memory-server');
       const mongod = await MongoMemoryServer.create({
@@ -73,20 +71,17 @@ async function connectDB() {
     }
   }
 
-  // Auto-seed if database is empty (in-memory mode)
-  if (isInMemory) {
-    const Country = require('./models/Country');
-    const count = await Country.countDocuments();
-    if (count === 0) {
-      console.log('Seeding database with country data...');
-      const { allCountries } = require('./seed');
-      // Insert in batches to avoid memory issues
-      const batchSize = 50;
-      for (let i = 0; i < allCountries.length; i += batchSize) {
-        await Country.insertMany(allCountries.slice(i, i + batchSize));
-      }
-      console.log(`Seeded ${allCountries.length} countries`);
+  // Auto-seed if database is empty
+  const Country = require('./models/Country');
+  const count = await Country.countDocuments();
+  if (count === 0) {
+    console.log('Seeding database with country data...');
+    const { allCountries } = require('./seed');
+    const batchSize = 50;
+    for (let i = 0; i < allCountries.length; i += batchSize) {
+      await Country.insertMany(allCountries.slice(i, i + batchSize));
     }
+    console.log(`Seeded ${allCountries.length} countries`);
   }
 }
 

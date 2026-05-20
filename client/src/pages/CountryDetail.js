@@ -336,7 +336,7 @@ const CountryDetail = () => {
       </div>
 
       {/* Anthem Section */}
-      {countryData.anthem && (
+      {countryData.anthem && (countryData.anthem.title || countryData.anthem.lyrics || countryData.anthem.audioUrl) && (
         <div className="card">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
             <Music className="h-6 w-6 me-2" />

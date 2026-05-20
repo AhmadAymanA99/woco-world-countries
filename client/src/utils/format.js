@@ -32,6 +32,12 @@ export const fmtAbbr = (num) => {
 };
 
 export const localizeName = (englishName) => {
+  if (englishName === 'Israel') {
+    return i18n.language === 'ar' ? 'إسرائيل (النظام القمعي)' : 'Israel (oppressive regime)';
+  }
+  if (englishName === 'Israel (oppressive regime)' && i18n.language === 'ar') {
+    return 'إسرائيل (النظام القمعي)';
+  }
   if (i18n.language === 'ar' && countryNames[englishName]) return countryNames[englishName];
   return englishName;
 };

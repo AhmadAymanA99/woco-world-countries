@@ -39,10 +39,7 @@ router.get('/', async (req, res) => {
       .select('name code continent flag capital population.total gdp.total')
       .sort(sortOptions);
     
-    // Localize country data if language is Arabic
-    const localizedCountries = req.language === 'ar' 
-      ? countries.map(country => localizeCountry(country.toObject(), req.language))
-      : countries;
+    const localizedCountries = countries.map(country => localizeCountry(country.toObject(), req.language));
     
     res.json({
       countries: localizedCountries,
@@ -104,10 +101,7 @@ router.get('/continent/:continent', async (req, res) => {
       .select('name code continent flag capital population.total gdp.total')
       .sort(sortOptions);
     
-    // Localize country data if language is Arabic
-    const localizedCountries = req.language === 'ar' 
-      ? countries.map(country => localizeCountry(country.toObject(), req.language))
-      : countries;
+    const localizedCountries = countries.map(country => localizeCountry(country.toObject(), req.language));
     
     res.json({
       countries: localizedCountries,
@@ -148,10 +142,7 @@ router.get('/search/:query', async (req, res) => {
     .limit(parseInt(limit))
     .sort({ name: 1 });
 
-    // Localize country data if language is Arabic
-    const localizedCountries = req.language === 'ar' 
-      ? countries.map(country => localizeCountry(country.toObject(), req.language))
-      : countries;
+    const localizedCountries = countries.map(country => localizeCountry(country.toObject(), req.language));
     
     res.json({
       countries: localizedCountries,

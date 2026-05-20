@@ -161,7 +161,7 @@ if (useSeedFallback) {
     const lang = req.language;
     const result = filtered.map(c => {
       const picked = pick(c, ['_id', 'name', 'code', 'continent', 'flag', 'capital', 'population.total', 'gdp.total']);
-      return lang === 'ar' ? localizeCountry(picked, lang) : picked;
+      return localizeCountry(picked, lang);
     });
     res.json({ countries: result, total: result.length });
   });
@@ -171,7 +171,7 @@ if (useSeedFallback) {
     const matches = allCountries.filter(c =>
       c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
     ).slice(0, +(req.query.limit || 20));
-    res.json(matches);
+    res.json({ countries: matches, total: matches.length });
   });
 
   router.get('/meta/continents', (req, res) => {
@@ -184,7 +184,7 @@ if (useSeedFallback) {
     const lang = req.language;
     const result = filtered.map(c => {
       const picked = pick(c, ['_id', 'name', 'code', 'continent', 'flag', 'capital', 'population.total', 'gdp.total']);
-      return lang === 'ar' ? localizeCountry(picked, lang) : picked;
+      return localizeCountry(picked, lang);
     });
     res.json({ countries: result, total: result.length });
   });
@@ -193,13 +193,14 @@ if (useSeedFallback) {
     const country = allCountries.find(c => c._id.toString() === req.params.identifier || c.code === req.params.identifier);
     if (!country) return res.status(404).json({ message: 'Country not found' });
     const lang = req.language;
-    res.json(lang === 'ar' ? localizeCountry({ ...country }, lang) : country);
+    res.json(localizeCountry({ ...country }, lang));
   });
 
   router.post('/compare', (req, res) => {
     const ids = req.body.countryIds || [];
     const compared = allCountries.filter(c => ids.includes(c._id.toString()));
-    res.json(compared);
+    const lang = req.language;
+    res.json(compared.map(c => localizeCountry({ ...c }, lang)));
   });
 
   app.use('/api/countries', router);

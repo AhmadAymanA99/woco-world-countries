@@ -69,10 +69,10 @@ app.get('/api/health', (req, res) => {
 // ——— DATA LAYER ———
 // Decide at module-load time whether we have a database.
 // On Vercel without MONGODB_URI we use seed-data fallback;
-// on Vercel WITH MONGODB_URI we try Atlas (non-blocking).
+// on Vercel WITH MONGODB_URI we use Atlas.
 // Locally we always connect DB before listening.
 
-const useSeedFallback = !!process.env.VERCEL;
+const useSeedFallback = process.env.VERCEL ? !process.env.MONGODB_URI : false;
 let dbReady = false;
 let dbError = null;
 

@@ -66,7 +66,7 @@ app.get('/api/health', (req, res) => {
 // on Vercel WITH MONGODB_URI we try Atlas (non-blocking).
 // Locally we always connect DB before listening.
 
-const useSeedFallback = process.env.VERCEL && !process.env.MONGODB_URI;
+const useSeedFallback = !!process.env.VERCEL;
 let dbReady = false;
 let dbError = null;
 

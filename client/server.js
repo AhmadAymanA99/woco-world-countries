@@ -168,10 +168,11 @@ if (useSeedFallback) {
 
   router.get('/search/:query', (req, res) => {
     const q = req.params.query.toLowerCase();
+    const lang = req.language;
     const matches = allCountries.filter(c =>
       c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
     ).slice(0, +(req.query.limit || 20));
-    res.json({ countries: matches, total: matches.length });
+    res.json({ countries: matches.map(c => localizeCountry(c, lang)), total: matches.length });
   });
 
   router.get('/meta/continents', (req, res) => {

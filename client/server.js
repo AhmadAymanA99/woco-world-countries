@@ -1,57 +1,87 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config({ path: require('path').join(__dirname, '..', 'config.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', 'config.env'), silent: true });
 
 const app = express();
 
-// Trust proxy for rate limiting behind Vercel/reverse proxy
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// CORS — allow any origin (Vercel handles same-origin routing)
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://woco-world-countries.vercel.app',
+  process.env.VERCEL_URL && 'https://' + process.env.VERCEL_URL,
+].filter(Boolean);
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
-
-// CORS configuration - Production ready
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://woco-world-countries.vercel.app'] 
-    : ['http://localhost:3000'],
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(null, true); // allow all in dev
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// i18n middleware
-const i18next = require('./config/i18n');
-const i18nextMiddleware = require('i18next-http-middleware');
-app.use(i18nextMiddleware.handle(i18next));
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+if (!process.env.VERCEL) app.use(limiter);
 
-// MongoDB connection with in-memory fallback (local dev only)
+// i18n middleware (with fallback if init fails)
+let i18next;
+try {
+  i18next = require('./config/i18n');
+  const i18nextMiddleware = require('i18next-http-middleware');
+  app.use(i18nextMiddleware.handle(i18next));
+} catch (err) {
+  console.error('i18n init failed:', err.message);
+}
+
+// Middleware to set req.t fallback when i18n is not available
+app.use((req, res, next) => {
+  if (!req.t) req.t = (key) => key;
+  next();
+});
+
+// Health check routes (no DB required, before any async init)
+app.get('/', (req, res) => {
+  res.json({ message: req.t('server.apiRunning'), status: 'healthy', timestamp: new Date().toISOString() });
+});
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ——— DATA LAYER ———
+// Decide at module-load time whether we have a database.
+// On Vercel without MONGODB_URI we use seed-data fallback;
+// on Vercel WITH MONGODB_URI we try Atlas (non-blocking).
+// Locally we always connect DB before listening.
+
+const useSeedFallback = process.env.VERCEL && !process.env.MONGODB_URI;
+let dbReady = false;
+let dbError = null;
+
 async function connectDB() {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
     });
     console.log('MongoDB connected successfully (Atlas)');
+    dbReady = true;
   } catch (err) {
+    dbError = err.message;
     if (process.env.VERCEL) {
       console.error('MongoDB connection failed on Vercel:', err.message);
-      throw err;
+      return; // don't throw, just mark unavailable
     }
     console.warn('Atlas connection failed, starting in-memory MongoDB...');
     try {
@@ -60,45 +90,36 @@ async function connectDB() {
         instance: { dbName: 'woco', launchTimeout: 60000 },
       });
       const uri = await mongod.getUri();
-      await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+      await mongoose.connect(uri);
       console.log('MongoDB connected successfully (in-memory)');
+      dbReady = true;
     } catch (memErr) {
       console.error('Failed to start in-memory MongoDB:', memErr.message);
-      process.exit(1);
+      dbError = memErr.message;
     }
   }
 
-  // Auto-seed if database is empty
-  const Country = require('./models/Country');
-  const count = await Country.countDocuments();
-  if (count === 0) {
-    console.log('Seeding database with country data...');
-    const { allCountries } = require('./seed');
-    const batchSize = 50;
-    for (let i = 0; i < allCountries.length; i += batchSize) {
-      await Country.insertMany(allCountries.slice(i, i + batchSize));
+  if (dbReady) {
+    try {
+      const Country = require('./models/Country');
+      const count = await Country.countDocuments();
+      if (count === 0) {
+        console.log('Seeding database with country data...');
+        const { allCountries } = require('./seed');
+        const batchSize = 50;
+        for (let i = 0; i < allCountries.length; i += batchSize) {
+          await Country.insertMany(allCountries.slice(i, i + batchSize));
+        }
+        console.log(`Seeded ${allCountries.length} countries`);
+      }
+    } catch (seedErr) {
+      console.error('Auto-seed failed:', seedErr.message);
     }
-    console.log(`Seeded ${allCountries.length} countries`);
   }
 }
 
-// Health check routes (no DB required)
-app.get('/', (req, res) => {
-  res.json({ 
-    message: req.t('server.apiRunning'), 
-    status: 'healthy',
-    timestamp: new Date().toISOString()
-  });
-});
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Routes
-if (process.env.VERCEL && !process.env.MONGODB_URI) {
+// ——— ROUTES ———
+if (useSeedFallback) {
   // Vercel without Atlas — serve country data from seed JSON
   const { allCountries } = require('./seed');
   const { localizeCountry } = require('./utils/localizeCountry');
@@ -197,6 +218,13 @@ if (process.env.VERCEL && !process.env.MONGODB_URI) {
   app.use('/api/attractions', require('./routes/attractions'));
 }
 
+// DB-status middleware (injects dbReady/dbError for routes that need it)
+app.use((req, res, next) => {
+  req.dbReady = dbReady;
+  req.dbError = dbError;
+  next();
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -208,22 +236,18 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-    res.status(404).json({ message: req.t('server.routeNotFound') });
+  res.status(404).json({ message: req.t('server.routeNotFound') });
 });
 
 const PORT = process.env.PORT || 5000;
 
 if (process.env.VERCEL) {
-  // Vercel serverless
   if (process.env.MONGODB_URI) {
-    // Atlas configured — try connecting
-    connectDB().catch((err) => console.error('Initial DB connection failed:', err.message));
+    connectDB();
   } else {
-    // No Atlas — country data served from seed JSON, user features disabled
     console.log('Running on Vercel without MongoDB, using seed data');
   }
 } else {
-  // Local dev — connect DB then start listening
   connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
